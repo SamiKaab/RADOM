@@ -118,30 +118,34 @@ def read_write_loop():
 
     # Continuously read sensor data and write it to a CSV file
     while True:
-        # Read data from sensors
-        now = rtc.read_datetime()
-        hp = human_presence.read_presence(human_presence.HPD_GPIO_PIN)
-        humanPresent = "yes" if hp == 1 else "no"
-        distance = distSensor.read()
+        if device_should_record():
+            # Read data from sensors
+            now = rtc.read_datetime()
+            hp = human_presence.read_presence(human_presence.HPD_GPIO_PIN)
+            humanPresent = "yes" if hp == 1 else "no"
+            distance = distSensor.read()
 
-        # Append data to the list
-        line = [now, distance, humanPresent]
-        data.append(line)
-        print("{now} {distance} {hp}".format(distance=distance, hp=humanPresent, now=now))
+            # Append data to the list
+            line = [now, distance, humanPresent]
+            data.append(line)
+            print("{now} {distance} {hp}".format(distance=distance, hp=humanPresent, now=now))
 
-        # Write data to CSV file after set amount of time has elapsed
-        elapsed = now - timeStart
-        if elapsed > timedelta(seconds=WRITE_PERIOD):
-            fileName = 'data//{id}_{now}_data.csv'.format(id=ID, now=timeStart)
-            write_data_to_file(fileName, data)
-            print("\nWrote data to file\n")
+            # Write data to CSV file after set amount of time has elapsed
+            elapsed = now - timeStart
+            if elapsed > timedelta(seconds=WRITE_PERIOD):
+                fileName = 'data//{id}_{now}_data.csv'.format(id=ID, now=timeStart)
+                write_data_to_file(fileName, data)
+                print("\nWrote data to file\n")
 
-            # Reset data and time for the next write interval
-            data = [data[0]]
-            timeStart = rtc.read_datetime()
+                # Reset data and time for the next write interval
+                data = [data[0]]
+                timeStart = rtc.read_datetime()
 
-        # Wait for the specified sampling period before collecting more data
-        time.sleep(SAMPLING_PERIOD)
+            # Wait for the specified sampling period before collecting more data
+            time.sleep(SAMPLING_PERIOD)
+        else:
+            print(f"recording will wake in {seconds_until_wake()}")
+            time.sleep(SAMPLING_PERIOD)
 
 
 def upload_loop():
@@ -165,23 +169,28 @@ def upload_loop():
 
     # Continuously check for an internet connection and backup data to Google Drive
     while True:
-        # Check if internet connection is available
-        if google_drive.is_internet_available():
-            # If internet connection is available, turn on the red LED and update RTC with the current time
-            q.put((20,RED_LED_PIN))
-            dt = get_time_from_internet()
-            rtc.write_datetime(dt)
+        if device_should_record():
+            # Check if internet connection is available
+            if google_drive.is_internet_available():
+                # If internet connection is available, turn on the red LED and update RTC with the current time
+                q.put((20,RED_LED_PIN))
+                dt = get_time_from_internet()
+                rtc.write_datetime(dt)
 
-            # Back up data to Google Drive and turn off the red LED to indicate success
-            google_drive.backup_files()
-            q.put((1,RED_LED_PIN))
+                # Back up data to Google Drive and turn off the red LED to indicate success
+                google_drive.backup_files()
+                q.put((1,RED_LED_PIN))
+            else:
+                # If internet connection is not available, turn off the red LED and print a message to the console
+                q.put((0,RED_LED_PIN))
+                print("\nWill back up later\n")
+
+            # Wait for the specified upload period before checking for an internet connection again
+            time.sleep(UPLOAD_PERIOD)
+        
         else:
-            # If internet connection is not available, turn off the red LED and print a message to the console
-            q.put((0,RED_LED_PIN))
-            print("\nWill back up later\n")
-
-        # Wait for the specified upload period before checking for an internet connection again
-        time.sleep(UPLOAD_PERIOD)
+            print(f"upload will wake in {seconds_until_wake()}")
+            time.sleep(UPLOAD_PERIOD)
 
 def get_time_from_internet():
     """
@@ -221,7 +230,29 @@ def write_data_to_file(fileName, data):
 
         # Write the data to the CSV file
         writer.writerows(data)
-      
+
+def device_should_record():
+    current_time = datetime.now().time()
+    start = datetime.strptime(WAKE_AT, "%H:%M").time()
+    end = datetime.strptime(SLEEP_AT, "%H:%M").time()
+
+    if start <= end:
+        return start <= current_time <= end
+    else:
+        return start <= current_time or current_time <= end  
+    
+def seconds_until_wake():
+    now = datetime.now()
+    wake_time_today = now.replace(hour=int(WAKE_AT.split(':')[0]), minute=int(WAKE_AT.split(':')[1]), second=0, microsecond=0)
+    
+    if now < wake_time_today:
+        delta = wake_time_today - now
+    else:
+        wake_time_tomorrow = wake_time_today + timedelta(days=1)
+        delta = wake_time_tomorrow - now
+
+    return int(delta.total_seconds())
+
 if __name__ == "__main__":
     try:
         #init led
@@ -235,6 +266,9 @@ if __name__ == "__main__":
         WRITE_PERIOD = config.getint('DEFAULT', 'WRITE_PERIOD')
         UPLOAD_PERIOD = config.getint('DEFAULT', 'UPLOAD_PERIOD')
         ID = config.getint('DEFAULT', 'ID')
+        WAKE_AT = config.get('DEFAULT', 'WAKE_AT')
+        SLEEP_AT = config.get('DEFAULT', 'SLEEP_AT')
+        
 
 
         # init sensors
