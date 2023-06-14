@@ -104,7 +104,7 @@ class I2CUnifiedLinux(I2CBase):
                     print('Slow baudrate detected. If glitching occurs' + setupi2c_str)
                 config_file.close()
         if bus is None:
-            bus = 1
+            bus = 0
         self.i2c = SMBus(bus)
 
     def readfrom_mem(self, addr, memaddr, nbytes, *, addrsize=8):

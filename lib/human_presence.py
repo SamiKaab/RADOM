@@ -1,9 +1,9 @@
 
-import  RPi.GPIO as GPIO
-from DFRobot_mmWave import *
+import onionGpio
+from lib.DFRobot_mmWave import *
 
 
-HPD_GPIO_PIN = 23
+HPD_GPIO_PIN = 2
 
 def setup_hpd(appear_latency, disappear_latency, start_distance, stop_distance):
     """Function to setup DFRobot Human Presence Detection board on UART 1
@@ -20,17 +20,17 @@ def setup_hpd(appear_latency, disappear_latency, start_distance, stop_distance):
     HPD.hpd_output_latency(appear_latency,disappear_latency)     # Set output latency to 0
     HPD.hpd_set_distance(start_distance,stop_distance)       # Set detection distance to between 0 and 2m
 
-def init_hdp(gpio_pin_number):
+def init_hdp():
     setup_hpd(0,0,0,1)
-    GPIO.setmode(GPIO.BCM) 
-    GPIO.setup(gpio_pin_number, GPIO.IN) 
+    gpioObject  = onionGpio.OnionGpio(HPD_GPIO_PIN)
+    status  = gpioObject.setInputDirection()
+def read_presence():
+    gpioObject  = onionGpio.OnionGpio(HPD_GPIO_PIN)
+    return int(gpioObject.getValue())
 
-def read_presence(gpio_pin_number):
-    return GPIO.input(gpio_pin_number)
-
-# if __name__ == "__main__":
-#     init_hdp(HPD_GPIO_PIN)
-#     while True:
-#         print(read_presence(HPD_GPIO_PIN))
-#         time.sleep(1)
+if __name__ == "__main__":
+    init_hdp()
+    while True:
+        print(read_presence())
+        time.sleep(1)
         

@@ -36,7 +36,7 @@ from __future__ import print_function
 from datetime import datetime
 import time
 
-import smbus
+import smbus2
 
 
 SECONDS_PER_MINUTE = 60
@@ -84,8 +84,8 @@ class SDL_DS3231():
     # DS3231 Code
     # datasheet: https://datasheets.maximintegrated.com/en/ds/DS3231.pdf
     ###########################
-    def __init__(self, twi=1, addr=0x68, at24c32_addr=0x56):
-        self._bus = smbus.SMBus(twi)
+    def __init__(self, twi=0, addr=0x68, at24c32_addr=0x56):
+        self._bus = smbus2.SMBus(twi)
         self._addr = addr
         self._at24c32_addr = at24c32_addr
 
