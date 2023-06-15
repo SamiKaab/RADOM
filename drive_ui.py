@@ -27,11 +27,20 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from google.oauth2 import service_account
+import requests
 
 
 
 TIMEZONE = 'Australia/Brisbane'
 SCOPES = ['https://www.googleapis.com/auth/drive']
+
+def internet_available():
+    """Check if an internet connection is available."""
+    try:
+        requests.get("http://google.com")
+        return True
+    except requests.exceptions.ConnectionError:
+        return False
 
 def get_credentials():
     """
@@ -41,11 +50,12 @@ def get_credentials():
         The user credentials for Google Drive.
     """
     # Check if a token file exists and load the credentials from it if it does
-    creds = None
-
-    # # Return the user credentials
-    creds = service_account.Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
-
+    try:
+        # # Return the user credentials
+        creds = service_account.Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
+    except:
+        creds = None
+        
     return creds
 
 def get_path(service, item_id, path=''):
@@ -171,8 +181,10 @@ class FileExplorer(QWidget):
         self.progress_bar.setVisible(False)
 
         self.creds = get_credentials()
-        self.service = build('drive', 'v3', credentials=self.creds, static_discovery=False)
-
+        try:
+            self.service = build('drive', 'v3', credentials=self.creds, static_discovery=False)
+        except:
+            self.service = None
         layout = QVBoxLayout()
         layout.addWidget(self.file_tree)
         layout.addWidget(self.download_button)
@@ -180,7 +192,9 @@ class FileExplorer(QWidget):
         layout.addWidget(self.progress_bar)
         self.setLayout(layout)
 
+        
         self.populate_tree()
+            
 
     def refresh(self):
         self.file_tree.clear()
@@ -192,27 +206,31 @@ class FileExplorer(QWidget):
         
     
     def populate_tree(self, parent_item=None):
-        if parent_item is None:
-            items = list_files(self.service)
-            for item in items:
-                tree_item = QTreeWidgetItem(self.file_tree, [item['name'], '', ''])
-                tree_item.setData(0, Qt.UserRole, item['id'])
-                if item['mimeType'] == 'application/vnd.google-apps.folder':
-                    tree_item.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
-                    tree_item.setExpanded(True)
-                self.populate_tree(tree_item)
-        else:
-            if parent_item.childCount() == 0:
-                parent_id = parent_item.data(0, Qt.UserRole)
-                items = list_files(self.service, parent_id)
+        if internet_available():
+            if self.service== None:
+                self.service = build('drive', 'v3', credentials=self.creds, static_discovery=False)
+            if parent_item is None:
+                items = list_files(self.service)
                 for item in items:
-                    tree_item = QTreeWidgetItem(parent_item, [item['name'], convert_datetime(item['modifiedTime']), convert_size(int(item['size']))])
+                    tree_item = QTreeWidgetItem(self.file_tree, [item['name'], '', ''])
                     tree_item.setData(0, Qt.UserRole, item['id'])
                     if item['mimeType'] == 'application/vnd.google-apps.folder':
                         tree_item.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
-                        tree_item.setExpanded(False)
-                        self.populate_tree(tree_item)
-
+                        tree_item.setExpanded(True)
+                    self.populate_tree(tree_item)
+            else:
+                if parent_item.childCount() == 0:
+                    parent_id = parent_item.data(0, Qt.UserRole)
+                    items = list_files(self.service, parent_id)
+                    for item in items:
+                        tree_item = QTreeWidgetItem(parent_item, [item['name'], convert_datetime(item['modifiedTime']), convert_size(int(item['size']))])
+                        tree_item.setData(0, Qt.UserRole, item['id'])
+                        if item['mimeType'] == 'application/vnd.google-apps.folder':
+                            tree_item.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
+                            tree_item.setExpanded(False)
+                            self.populate_tree(tree_item)
+        else:
+            QMessageBox.warning(self, "No Internet Connection", "Please check your internet connection and try again.")
                 
                 
 
@@ -236,47 +254,56 @@ class FileExplorer(QWidget):
             context_menu.exec_(self.file_tree.mapToGlobal(point))
 
     def download_all(self):
-        dialog = QFileDialog()
-        output_dir = dialog.getExistingDirectory(self, "Select Output Directory")
-        if output_dir:  # If the user didn't cancel the dialog
-            self.progress_bar.setVisible(True)
-            self.progress_bar.setValue(0)
-            self.progress_bar.setMaximum(100)
-            
-            self.download_thread = DownloadThread(self.service, output_dir)
-            self.download_thread.progressChanged.connect(self.update_progress)
-            self.download_thread.finished.connect(self.download_finished)
-            
-            self.download_thread.start()
+        if internet_available():
 
+            dialog = QFileDialog()
+            output_dir = dialog.getExistingDirectory(self, "Select Output Directory")
+            if output_dir:  # If the user didn't cancel the dialog
+                self.progress_bar.setVisible(True)
+                self.progress_bar.setValue(0)
+                self.progress_bar.setMaximum(100)
+                
+                self.download_thread = DownloadThread(self.service, output_dir)
+                self.download_thread.progressChanged.connect(self.update_progress)
+                self.download_thread.finished.connect(self.download_finished)
+                
+                self.download_thread.start()
+        else:
+            QMessageBox.warning(self, "No Internet Connection", "Please check your internet connection and try again.")
     def download_item(self, item):
-        file_id = item.data(0, Qt.UserRole)
+        if internet_available():
+            file_id = item.data(0, Qt.UserRole)
 
-        dialog = QFileDialog()
-        output_dir = dialog.getExistingDirectory(self, "Select Output Directory")
-        if output_dir:  # If the user didn't cancel the dialog
+            dialog = QFileDialog()
+            output_dir = dialog.getExistingDirectory(self, "Select Output Directory")
+            if output_dir:  # If the user didn't cancel the dialog
+                self.progress_bar.setVisible(True)
+                self.progress_bar.setValue(0)
+                self.progress_bar.setMaximum(100)
+                
+                self.download_thread = DownloadThread(self.service, output_dir, file_id)
+                self.download_thread.progressChanged.connect(self.update_progress)
+                self.download_thread.finished.connect(self.download_finished)
+                
+                self.download_thread.start()
+        else:
+            QMessageBox.warning(self, "No Internet Connection", "Please check your internet connection and try again.") 
+            
+    def delete_item(self, item):
+        if internet_available():
+            file_id = item.data(0, Qt.UserRole)
             self.progress_bar.setVisible(True)
             self.progress_bar.setValue(0)
             self.progress_bar.setMaximum(100)
             
-            self.download_thread = DownloadThread(self.service, output_dir, file_id)
-            self.download_thread.progressChanged.connect(self.update_progress)
-            self.download_thread.finished.connect(self.download_finished)
+            self.delete_thread = DeleteThread(self.service, file_id)
+            self.delete_thread.progressChanged.connect(self.update_progress)
+            self.delete_thread.finished.connect(self.delete_finished)
             
-            self.download_thread.start()
-
-    def delete_item(self, item):
-        file_id = item.data(0, Qt.UserRole)
-        self.progress_bar.setVisible(True)
-        self.progress_bar.setValue(0)
-        self.progress_bar.setMaximum(100)
-        
-        self.delete_thread = DeleteThread(self.service, file_id)
-        self.delete_thread.progressChanged.connect(self.update_progress)
-        self.delete_thread.finished.connect(self.delete_finished)
-        
-        self.delete_thread.start()
-
+            self.delete_thread.start()
+        else:
+            QMessageBox.warning(self, "No Internet Connection", "Please check your internet connection and try again.")
+            
     def update_progress(self, value):
         self.progress_bar.setValue(value)
 
