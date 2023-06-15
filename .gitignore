@@ -1,6 +1,5 @@
 *test*
-token.json
-credentials.json
+*.json
 data
 BackedUp
 __pycache__
