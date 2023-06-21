@@ -192,10 +192,14 @@ class FileExplorer(QWidget):
         layout.addWidget(self.progress_bar)
         self.setLayout(layout)
 
+        self.setAttribute(Qt.WA_DeleteOnClose)  # Close and delete the widget when closed
         
         self.populate_tree()
             
 
+    def closeEvent(self, event):
+        self.destroy()
+        
     def refresh(self):
         self.file_tree.clear()
         self.populate_tree()
@@ -348,11 +352,13 @@ class DeleteThread(QThread):
     def update_progress(self, progress):
         self.progressChanged.emit(progress)
 
-
-if __name__ == "__main__":
+def main():
     app = QApplication(sys.argv)
     window = FileExplorer()
     window.resize(400, 300)  # Set the window size to 800x600 pixels
 
     window.show()
     sys.exit(app.exec_())
+
+if __name__ == "__main__":
+    main()    
