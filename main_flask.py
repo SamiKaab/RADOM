@@ -16,6 +16,7 @@ import os
 from flask import Flask, jsonify,request
 from collections import deque
 
+import battery
 
 connected = False
 uploading = False
@@ -72,11 +73,11 @@ def read_write_loop():
             hp = human_presence.read_presence()
             # hp = "yes" if hp else "no"
             distance = distSensor.read()
-
+            battery_level = round(battery.compute_battery_level(),2)
             # Append data to the list
             line = [now, distance, hp]
             data.append(line)
-            graph_data = [now, distance, hp]
+            graph_data = [now, distance, hp, battery_level]
             sensor_data_queue.append(graph_data)
 
             #print("{now} {distance} {hp}".format(distance=distance, hp=humanPresent, now=now))
@@ -332,7 +333,8 @@ def get_sensor_data():
             'sa': SLEEP_AT,
             'datetime': data[0],
             'distance': data[1],
-            'human_presence': data[2]
+            'human_presence': data[2],
+            'battery_level': data[3]
         }
         return jsonify(sensor_data)
     else:
