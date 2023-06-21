@@ -92,10 +92,24 @@ if open_browser:
 ```
 the package `webbrowser` cannot be used on the omega.
 
+
+<!-- ~ # cat /etc/rc.local 
+
+# Put your custom commands here that should be executed once
+# the system init finished. By default this file runs the 
+# Omega2 Pro initialization script.
+
+/usr/bin/o2-pro-init
+/root/Firmware/run_stand_up.sh &
+exit 0
+~ #  -->
+
+
 # Setting up a google drive API
-The data recorded is uploaded to a google drive using the google drive api. For the program to use the api is is necessary to create credentials.
-You can find instructions on how to set up a google drive api [here](https://developers.google.com/drive/api/quickstart/python). Make sure to link a google service account to the project. Since we are using a headless device it is not possible for us to generate tokens which are necessary when using a normal google account a require a webbrowser based authentification which we cannot perform. This is the reason why a service account is required.
+The data recorded is uploaded to a google drive using the google drive api. For the program to use the api it is necessary to generate a credentials file.
+You can find instructions on how to set up a google drive api [here](https://developers.google.com/drive/api/quickstart/python).  
+Since we are using a headless device it is not possible for us to generate tokens which are necessary when using a normal google account and require a webbrowser based authentification which we cannot perform. For this reason make sure to link a google service account to the project.
 
 
 # Usage
-The Omega2 Pro should now be ready. Before rebooting the device (`sudo reboot`), you may want to modify the variables stored in [config.ini](/config.ini).
+The Omega2 Pro should now be ready. Before rebooting the device, you may want to modify the variables stored in [config.ini](/config.ini).
