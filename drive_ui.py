@@ -163,7 +163,8 @@ class FileExplorer(QWidget):
     def __init__(self, parent=None):
         super(FileExplorer, self).__init__(parent)
         self.setWindowTitle("Google Drive Explorer")
-        self.setWindowIcon(QIcon('images//Google-Drive-Logo-700x394.png'))
+        self.setWindowIcon(QIcon('images/Up_logo.png'))
+
         
         self.file_tree = QTreeWidget()
         self.file_tree.setHeaderLabels(["Name", "Date Modified", "Size"])#, "ID", "Type"])

@@ -1,0 +1,12 @@
+Flask
+google-api-python-client 
+google-auth-httplib2 
+google-auth-oauthlib
+pyserial
+requests
+smbus2
+PySide2
+pytz
+dash
+paramiko
+waitress

@@ -1,18 +1,19 @@
 from collections.abc import Callable, Iterable, Mapping
 from typing import Any
-from PySide2.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QPushButton, QMessageBox
+from PySide2.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QMessageBox,QSplashScreen
 from PySide2.QtWebEngineWidgets import QWebEngineView
-from PySide2.QtCore import QTimer, QCoreApplication, QThread
+from PySide2.QtCore import QTimer, QCoreApplication, QThread, Qt
+from PySide2.QtGui import QIcon, QPixmap
 import sys
-import drive_ui
 import paramiko
 import time
 import threading
+import drive_ui
 import flaskreceive_test
+import config_editor_ui
 import requests
 import waitress
-# add options to send config files to the device
-# add
+import authentification
 
 class DashAppThread(QThread):
     def run(self):
@@ -26,54 +27,60 @@ class DashAppThread(QThread):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Embedded Website")
+        splash_image = QPixmap("images/BeUpstanding_logo.png")
+        self.splash = QSplashScreen(splash_image, Qt.WindowStaysOnTopHint)
+        self.splash.show()
+
+        
+        self.setWindowTitle("Be Up Standing")
         self.setGeometry(100, 100, 800, 600)
+        self.setWindowIcon(QIcon('images/Up_logo.png'))
 
 
         self.file_explorer = None
         self.ssh_client = None
+        self.hostname = 'beupstanding-a17e.local'
+        self.username = 'root'
+        self.password = 'onioneer'
         
-        # Create a widget for the main layout
         main_widget = QWidget(self)
         self.setCentralWidget(main_widget)
         
-        # Create a vertical box layout
-        layout = QVBoxLayout(main_widget)
-
-        # Create a web view
+        layout = QVBoxLayout(main_widget)  # Main vertical layout
+        
         self.web_view = QWebEngineView(self)
-        self.web_view.load("http://127.0.0.1:8050/")  # Load a website
-        self.web_view.setZoomFactor(0.8)  # Set the zoom factor to scale down the website
-
-        # Add the web view to the layout
+        self.web_view.load("http://127.0.0.1:8050/")
+        self.web_view.setZoomFactor(0.8)
         layout.addWidget(self.web_view)
+        
+        button_layout = QHBoxLayout()  # Horizontal layout for buttons
 
-        # Create "Open Drive" button
         open_drive_button = QPushButton("Open Drive", self)
         open_drive_button.clicked.connect(self.open_drive)
+        button_layout.addWidget(open_drive_button)
+        
+        open_config_editor_button = QPushButton("Configure", self)
+        open_config_editor_button.clicked.connect(self.open_config_editor)
+        button_layout.addWidget(open_config_editor_button)
 
-        # Add the "Open Drive" button to the layout
-        layout.addWidget(open_drive_button)
-
-        # Create "Stop Program" button
         self.start_stop_button = QPushButton("Stop Program", self)
         self.start_stop_button.clicked.connect(self.start_stop_program)
-
-        # Add the "Stop Program" button to the layout
-        layout.addWidget(self.start_stop_button)
+        button_layout.addWidget(self.start_stop_button)
         
-        # create the Connect button
         self.connect_button = QPushButton("Connect")
         self.connect_button.clicked.connect(self.connect)
+        button_layout.addWidget(self.connect_button)
 
-        # Add the "Stop Program" button to the layout
-        layout.addWidget(self.connect_button)
+        layout.addLayout(button_layout)  # Add the button layout to the main layout
+        
         self.onStart()
+        self.splash.close()
         
     def onStart(self):
         self.dashAppThread = DashAppThread()
         self.dashAppThread.start()
         
+        self.splash.showMessage("Trying to connect the device", Qt.AlignBottom | Qt.AlignCenter, Qt.white)
         self.connect()
         if self.ssh_client is not None:
             
@@ -93,15 +100,12 @@ class MainWindow(QMainWindow):
     def connect(self):
         if self.ssh_client is None:
             try:
-                # SSH connection details
-                hostname = 'omega-a17e.local'
-                username = 'root'
-                password = 'onioneer'
+               
 
                 # Connect to the device via SSH
                 ssh_client = paramiko.SSHClient()
                 ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                ssh_client.connect(hostname, username=username, password=password)
+                ssh_client.connect(self.hostname, username=self.username, password=self.password)
                 self.ssh_client =  ssh_client
                 self.connect_button.setText("Disconnect")
                 self.start_stop_button.setDisabled(False)
@@ -150,7 +154,10 @@ class MainWindow(QMainWindow):
         print("Opening Drive...")
         self.file_explorer = drive_ui.FileExplorer()
         self.file_explorer.show()
-        
+    
+    def open_config_editor(self):
+        self.config_editor = config_editor_ui.ConfigEditor()
+        self.config_editor.show()
     def check_device_stopped(self,i):
         if i > 30:
             command = 'kill -9 $(pgrep -f main)'
