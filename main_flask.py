@@ -26,8 +26,14 @@ FILE_HEADER = ["Date time", "Distance(mm)", "Human Present"]
 # Create a flag to indicate if the threads should continue running
 running = True
 
+DATA_DIR = "data"
+
+
 
 sensor_data_queue = deque(maxlen=10)
+
+# Create an empty queue
+my_queue = deque()
 
 def signal_handler(sig, frame):
     # Set the running flag to False when Ctrl-C is pressed
@@ -54,7 +60,6 @@ def read_write_loop():
     Returns:
         None.
     """
-    global recording
     global running
 
 
@@ -62,12 +67,14 @@ def read_write_loop():
     data = [FILE_HEADER]
     lastWriteTime = rtc.read_datetime()
     lastNewFileTime = rtc.read_datetime()
-    fileName = 'data//{id}_{now}'.format(id=ID, now=lastNewFileTime)
+    fileName = os.path.join(DATA_DIR,f"{ID}_{lastNewFileTime}") 
 
     # Continuously read sensor data and write it to a CSV file
     while running:
         if device_should_record():
             recording = True
+            my_queue.append(("recording", recording))
+
             # Read data from sensors
             now = rtc.read_datetime()
             hp = human_presence.read_presence()
@@ -88,7 +95,7 @@ def read_write_loop():
                 data = [FILE_HEADER]
                 lastWriteTime = now
                 os.rename(fileName,f"{fileName}.csv")
-                fileName = 'data//{id}_{now}'.format(id=ID, now=now)
+                fileName = os .path.join(DATA_DIR,f"{ID}_{now}")
                 lastNewFileTime = now
                 
             # Write data to CSV file after set amount of time has elapsed
@@ -105,16 +112,24 @@ def read_write_loop():
             time.sleep(SAMPLING_PERIOD)
         else:
             recording = False
+            my_queue.append(("recording", recording))
+
             #print(f"recording will wake in {seconds_until_wake()}")
             time.sleep(SAMPLING_PERIOD)
     recording = False
+    my_queue.append(("recording", recording))
+
     
 
 def internet_check_loop():
-    global connected
     global running
     while running:
-        connected = google_drive.is_internet_available()
+        try:
+            print("internet_check_loop")
+            connected = google_drive.is_internet_available()
+            my_queue.append(("connected", connected))
+        except:
+            pass
 
 def upload_loop():
     """
@@ -127,7 +142,6 @@ def upload_loop():
     Returns:
         None.
     """
-    global connected, uploading
     global running
 
     # Update RTC with the current time if internet connection is available
@@ -150,21 +164,25 @@ def upload_loop():
             # Check if internet connection is available
             if internet:
                 uploading = True
+                my_queue.append(("uploading", uploading))
+
                 # connected = True
 
                 # Back up data to Google Drive and turn off the red LED to indicate success
-                file_list = [file for file in os.listdir("data") if file.endswith(".csv")]
+                file_list = [file for file in os.listdir(DATA_DIR) if file.endswith(".csv")]
                 try:
                     google_drive.backup_files(file_list)
                 except:
                     print("problem encountered while uploading")            
                 uploading = False
+                my_queue.append(("uploading", uploading))
 
             else:
                 # If internet connection is not available, turn off the red LED and #print a message to the console
                 #print("\nWill back up later\n")
                 # connected = False
                 uploading = False
+                my_queue.append(("uploading", uploading))
             # Wait for the specified upload period before checking for an internet connection again
             time.sleep(UPLOAD_PERIOD)
         
@@ -172,6 +190,7 @@ def upload_loop():
             #print(f"upload will wake in {seconds_until_wake()}")
             time.sleep(UPLOAD_PERIOD)
     uploading = False
+    my_queue.append(("uploading", uploading))
     # connected = False
 
 def get_time_from_internet():
@@ -239,26 +258,33 @@ def seconds_until_wake():
 
     return int(delta.total_seconds())
 
-
-
-
 # Function to pulsate the LED with a specified frequency and color
 def pulsate_led():
-    global connected, uploading, recording,settingUp
     global running
+    global_var_dict = {
+        "connected" : 0,
+        "uploading" : 0,
+        "recording" : 0,
+        "settingUp" : 0,
+        "running" : 0
+        }
 
     max_intensity = 255
     intensity = 0
     direction = 1
     while running:
+        while my_queue:
+            key, value = my_queue.popleft()
+            global_var_dict[key] = value
+            print(f"got {key}:{value}")
 
-        if recording and not connected:
+        if global_var_dict["recording"] and not global_var_dict["connected"]:
             # green
             frequency = 0.5
             red = 0
             green = 255
             blue = 0
-        elif recording and connected:
+        elif global_var_dict["recording"] and global_var_dict["connected"] :
             # blue
             if uploading:
                 frequency = 20
@@ -270,13 +296,13 @@ def pulsate_led():
                 red = 0
                 green = 0
                 blue = 255
-        elif not recording and not settingUp:
+        elif not global_var_dict["recording"] and not global_var_dict["settingUp"] :
             # purple
             frequency = 0.1
             red = 255
             green = 51
             blue = 255
-        elif settingUp:
+        elif global_var_dict["settingUp"] :
             # yellow
             frequency = 0.5
             red = 255
@@ -308,9 +334,7 @@ def pulsate_led():
         # for intensity in range(max_intensity, -1, -1):
         #     led.set_led_color(red * intensity // max_intensity, green * intensity // max_intensity, blue * intensity // max_intensity)
         #     time.sleep(period / (2 * max_intensity))
-    led.set_led_color(0,0,0)
-
-
+    led.set_led_color(255,0,0)
 
 app = Flask(__name__)
 
@@ -343,10 +367,11 @@ def get_sensor_data():
 
 if __name__ == "__main__":
     try:
+        my_queue.append(("settingUp", True))
 
         led_thread = threading.Thread(target=pulsate_led)        # red led loop
         led_thread.start()
-        
+        print(1)
         # get user defined variable from config file
         config = configparser.ConfigParser()
         config.read('config.ini')
@@ -354,9 +379,10 @@ if __name__ == "__main__":
         WRITE_PERIOD = config.getint('DEFAULT', 'WRITE_PERIOD')
         NEW_FILE_PERIOD = config.getint('DEFAULT', 'NEW_FILE_PERIOD')
         UPLOAD_PERIOD = config.getint('DEFAULT', 'UPLOAD_PERIOD')
-        ID = config.getint('DEFAULT', 'ID')
+        ID = config.get('DEFAULT', 'ID')
         WAKE_AT = config.get('DEFAULT', 'WAKE_AT')
         SLEEP_AT = config.get('DEFAULT', 'SLEEP_AT')
+        print(2)
         
 
 
@@ -379,6 +405,8 @@ if __name__ == "__main__":
         internet_check_thread.start()
         
         settingUp = False
+        my_queue.append(("settingUp", False))
+
         app.run(host='0.0.0.0', port=5000)
         while running:
             time.sleep(1)
