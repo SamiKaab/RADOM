@@ -12,17 +12,15 @@ def get_battery_voltage():
         
 def compute_battery_level():
     battery_voltage = get_battery_voltage()
-    print("Battery voltage:", battery_voltage, "v")
     full_voltage = 4.1  # Replace with the voltage of a fully charged battery
-    empty_voltage = 3.30  # Replace with the voltage of an empty battery
+    empty_voltage = 2.7  # Replace with the voltage of an empty battery
 
     battery_percentage = ((battery_voltage - empty_voltage) / (full_voltage - empty_voltage)) * 100 
     battery_percentage = battery_percentage if battery_percentage < 100 else 100 
     return battery_percentage
-
-
 if __name__ == "__main__":
     while True:
         battery_level = round(compute_battery_level(),2)
+        print(get_battery_voltage())
         print(datetime.datetime.now(), "Battery Level:", battery_level, "%")
         time.sleep(1)
