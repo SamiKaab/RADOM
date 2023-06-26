@@ -53,7 +53,7 @@ def get_credentials():
     #     #     token.write(creds.to_json())
 
     # # Return the user credentials
-    creds = service_account.Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
+    creds = service_account.Credentials.from_service_account_file("be-up-standing-3ef624974c8c.json", scopes=SCOPES)
 
     return creds
 
@@ -142,10 +142,10 @@ def backup_files(file_list):
 def is_internet_available():
     """Check if an internet connection is available."""
     try:
-        requests.get("http://google.com")
+        requests.get("http://google.com", timeout=5)
         logging.info("Internet access available")
         return True
-    except requests.exceptions.ConnectionError:
+    except:
         logging.error("No internet access available")
         return False
 
