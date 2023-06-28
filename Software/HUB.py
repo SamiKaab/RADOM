@@ -27,14 +27,14 @@ class DashAppThread(QThread):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        splash_image = QPixmap("images/BeUpstanding_logo.png")
+        splash_image = QPixmap("images/standupdeskproject_logo.png")
         self.splash = QSplashScreen(splash_image, Qt.WindowStaysOnTopHint)
         self.splash.show()
 
         
-        self.setWindowTitle("Be Up Standing")
+        self.setWindowTitle("Be Up Standing - Not for comercial use, research purposes only")
         self.setGeometry(100, 100, 800, 600)
-        self.setWindowIcon(QIcon('images/Up_logo.png'))
+        self.setWindowIcon(QIcon('images/standup_logo.ico'))
 
 
         self.file_explorer = None
@@ -88,6 +88,7 @@ class MainWindow(QMainWindow):
                 self.start_stop_button.setText("Stop Device")
             else:
                 self.start_stop_button.setText("Start Device")
+        
 
     def closeEvent(self,event):
         self.web_view.destroy()

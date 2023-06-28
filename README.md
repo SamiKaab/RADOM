@@ -11,8 +11,6 @@ This project utilises a Omega2 Pro to read data from a human presence sensor and
 - Jumper wires
   
 
-
-
 <!-- Verify that the Omega2 Pro is connected to internet:
 ```sh
 ping duckduckgo.com
@@ -90,19 +88,16 @@ and
 if open_browser:   
     webbrowser.open(auth_url, new=1, autoraise=True)
 ```
-the package `webbrowser` cannot be used on the omega.
-
-
-<!-- ~ # cat /etc/rc.local 
-
-# Put your custom commands here that should be executed once
-# the system init finished. By default this file runs the 
-# Omega2 Pro initialization script.
-
-/usr/bin/o2-pro-init
+the package `webbrowser` cannot be used on the omega.  
+In order for the program to run on boot the following line needs to be added to `/etc/rc.local` right before `exit 0`:
+```sh
 /root/Firmware/run_stand_up.sh &
-exit 0
-~ #  -->
+```
+
+```sh
+mv lib/flow.py venv/lib/python3.6/site-packages/google_auth_oauthlib/flow.py
+```
+
 
 
 # Setting up a google drive API
@@ -112,4 +107,9 @@ Since we are using a headless device it is not possible for us to generate token
 
 
 # Usage
-The Omega2 Pro should now be ready. Before rebooting the device, you may want to modify the variables stored in [config.ini](/config.ini).
+The Omega2 Pro should now be ready. Turn off and on the device using the slide switch on the side. The program should start automatically. 
+
+|**Recording without internet access**|**Recording with internet access**|**Uploading data to google drive**|**Device sleeping**|
+|:---:|:---:|:---:|:---:|
+|![](https://placehold.co/40x10/08FF30/08FF30)|![blue](https://placehold.co/40x10/1589F0/1589F0)|![blue](https://placehold.co/10x10/00ffff/00ffff)|![blue](https://placehold.co/50x10/ff33ff/ff33ff)|
+|Green fading in and out at 1 second intervals|Blue fading in and out at 1 second intervals|Light blue flashing|purple fading in and out slowly|

@@ -4,3 +4,10 @@ data
 BackedUp
 __pycache__
 venv
+*.exe
+*.spec
+*.pyc
+*.pyo
+*.pyd
+build
+dist
