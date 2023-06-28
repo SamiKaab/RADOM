@@ -2,6 +2,7 @@ import lib.human_presence as human_presence
 from lib.PiicoDev_VL53L1X import PiicoDev_VL53L1X
 import lib.SDL_DS3231 as RTC
 import lib.full_color_led as led
+import lib.battery as battery
 
 import time
 from datetime import datetime, timedelta
@@ -16,17 +17,16 @@ import os
 from flask import Flask, jsonify,request
 from collections import deque
 
-import battery
 
 connected = False
 uploading = False
 recording = False
 settingUp = True
-FILE_HEADER = ["Date time", "Distance(mm)", "Human Present"]
 # Create a flag to indicate if the threads should continue running
 running = True
 
 DATA_DIR = "data"
+FILE_HEADER = ["Date time", "Distance(mm)", "Human Present"]
 
 
 
@@ -125,7 +125,6 @@ def internet_check_loop():
     global running
     while running:
         try:
-            print("internet_check_loop")
             connected = google_drive.is_internet_available()
             my_queue.append(("connected", connected))
         except:
@@ -276,7 +275,6 @@ def pulsate_led():
         while my_queue:
             key, value = my_queue.popleft()
             global_var_dict[key] = value
-            print(f"got {key}:{value}")
 
         if global_var_dict["recording"] and not global_var_dict["connected"]:
             # green

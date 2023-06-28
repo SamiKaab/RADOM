@@ -14,24 +14,9 @@ from PySide2.QtWidgets import (
     QMessageBox,
 )
 from PySide2.QtGui import QIcon
-
-
-def get_wifi_name():
-    # Run the command to get the Wi-Fi network details
-    result = subprocess.run(['netsh', 'wlan', 'show', 'interface'], capture_output=True, text=True)
-
-    # Get the output of the command
-    output = result.stdout
-
-    # Find the SSID in the output
-    start_index = output.find("SSID")
-    end_index = output.find("\n", start_index)
-    ssid_line = output[start_index:end_index]
-    # Extract the SSID value
-    ssid = None if ssid_line == "" else ssid_line.split(":")[1].strip()
-
-    # Print the SSID
-    return ssid
+import authentification
+import time
+from helper_functions import get_wifi_name
 
 
 class ConfigEditor(QMainWindow):
@@ -40,7 +25,7 @@ class ConfigEditor(QMainWindow):
         "Write Period": "30",
         "New File Period": "120",
         "Upload Period": "120",
-        "ID": "0",
+        "ID": "xxxx",
         "Wake At": "07:30",
         "Sleep At": "17:30",
     }
@@ -55,11 +40,15 @@ class ConfigEditor(QMainWindow):
         "Sleep At": "SLEEP_AT",
     }
 
-    def __init__(self):
+    def __init__(self, hostname=None, password=None):
         super().__init__()
-        self.setWindowTitle("Config Editor")
+        self.setWindowTitle("Configure")
         #set icon
-        self.setWindowIcon(QIcon('images/Up_logo.png'))
+        self.setWindowIcon(QIcon('images/standup_logo.ico'))
+        
+        self.hostname = hostname
+        self.username = 'root'
+        self.password = password
 
         self.config = configparser.ConfigParser()
         self.values = self.DEFAULT_VALUES.copy()
@@ -94,7 +83,10 @@ class ConfigEditor(QMainWindow):
                     index = self.labels.index(label)
                     widget = self.widgets[index]
                     if isinstance(widget, QLineEdit):
+                        cursor_position = widget.cursorPosition()
                         widget.setText(value)
+                        widget.setCursorPosition(cursor_position)
+
                     elif isinstance(widget, QTimeEdit):
                         widget.setTime(QTime.fromString(value, "HH:mm"))
 
@@ -113,7 +105,11 @@ class ConfigEditor(QMainWindow):
             else:
                 if key == "ID":
                     wifi_name = get_wifi_name()
+                    og_value = value
                     value = wifi_name if wifi_name is not None else value
+                    value = value.split("-")[1] if "-" in value else og_value
+                    value = value.lower()
+                    
                 self.values[key] = value
                 line_edit = QLineEdit(value, self)
                 line_edit.textChanged.connect(self.update_value)
@@ -128,7 +124,9 @@ class ConfigEditor(QMainWindow):
         sender = self.sender()
         index = self.widgets.index(sender)
         label = self.labels[index].text()
-        self.values[label] = self.check_value(label, value)
+        new_value = self.check_value(label, value)
+        value = new_value if new_value is not None else self.values[label]
+        self.values[label] = value
         self.save_button.setText("Save Config")
         self.save_button.clicked.disconnect()  # Disconnect the previous connection
         self.save_button.clicked.connect(self.save_config)
@@ -173,7 +171,7 @@ class ConfigEditor(QMainWindow):
                     if v < 1:
                         value = "1"
                 except ValueError:
-                    value = "1"
+                    value = None
 
         return value
 
@@ -194,9 +192,7 @@ class ConfigEditor(QMainWindow):
         self.statusBar().showMessage("Config saved successfully!")
 
     def send_config(self):
-        hostname = 'beupstanding-a17e.local'
-        username = 'root'
-        password = 'onioneer'
+     
         src = 'config.ini'
         dst = '/root/Firmware/config.ini'
         client = paramiko.SSHClient()
@@ -204,13 +200,15 @@ class ConfigEditor(QMainWindow):
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         try:
-            with paramiko.Transport(hostname, 22) as t:
-                t.connect(username=username, password=password)
+            with paramiko.Transport(self.hostname, 22) as t:
+                t.connect(username=self.username, password=self.password)
                 sftp = paramiko.SFTPClient.from_transport(t)
                 print("Copying file: %s to path: %s" % (src, dst))
                 sftp.put(src, dst)
                 sftp.close()
             self.statusBar().showMessage("Config sent successfully!")
+            QMessageBox.information(self, "Config Editor", "Config sent successfully!")
+            self.close()
         except paramiko.AuthenticationException:
             self.statusBar().showMessage("Authentication failed.")
         except paramiko.SSHException as e:

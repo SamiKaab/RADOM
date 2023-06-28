@@ -1,21 +1,39 @@
 import sys
-from PySide2.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget, QMessageBox
+from PySide2.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget, QMessageBox, QHBoxLayout, QCheckBox
+from PySide2.QtCore import Signal
+
+from PySide2.QtCore import Signal
+from PySide2.QtWidgets import QMainWindow, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget, QMessageBox, QHBoxLayout, QCheckBox
+from PySide2.QtGui import QIcon
+from helper_functions import get_wifi_name
 
 class LoginWindow(QMainWindow):
+    closed = Signal(str, str, bool)  # Add a signal to emit the hostname and password
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Login")
+        self.setWindowIcon(QIcon('images/standup_logo.ico'))
+
         self.setGeometry(100, 100, 300, 150)
-        
-        self.id = None
-        self.passwd = None
+
+        self.hostname = None
+        self.password = None
+        self.login_requested = False
 
         # Create widgets
         self.id_label = QLabel("ID:", self)
         self.id_input = QLineEdit(self)
+        wifi_name = get_wifi_name()
+        value = wifi_name if wifi_name is not None else value
+        value = value.split("-")[1] if "-" in value else ''
+        value = value.lower()
+        
+        self.id_input.setText(value)
         self.password_label = QLabel("Password:", self)
         self.password_input = QLineEdit(self)
         self.password_input.setEchoMode(QLineEdit.Password)
+        self.show_password_checkbox = QCheckBox("Show Password", self)
         self.login_button = QPushButton("Login", self)
 
         # Create layout and add widgets
@@ -24,7 +42,12 @@ class LoginWindow(QMainWindow):
         layout.addWidget(self.id_input)
         layout.addWidget(self.password_label)
         layout.addWidget(self.password_input)
-        layout.addWidget(self.login_button)
+        
+        # Add the show password checkbox and login button to a horizontal layout
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.show_password_checkbox)
+        button_layout.addWidget(self.login_button)
+        layout.addLayout(button_layout)
 
         # Create central widget and set the layout
         central_widget = QWidget(self)
@@ -34,6 +57,9 @@ class LoginWindow(QMainWindow):
         # Connect button click event to the login function
         self.login_button.clicked.connect(self.login)
 
+        # Connect the checkbox state change event to the toggle_password_visibility function
+        self.show_password_checkbox.stateChanged.connect(self.toggle_password_visibility)
+
     def login(self):
         user_id = self.id_input.text()
         password = self.password_input.text()
@@ -41,11 +67,25 @@ class LoginWindow(QMainWindow):
         if len(user_id) != 4:
             QMessageBox.warning(self, "Invalid ID", "Please enter a 4-character ID.\nThe ID should be the last four characters of the device WiFi network name.")
         elif len(password) < 1:
-            QMessageBox.warning(self, "Invalid password", "Please enter the you password.")
+            QMessageBox.warning(self, "Invalid password", "Please enter your password.")
         else:
-            self.id = user_id
-            self.passwd = password
+            self.hostname = f"standup-{user_id}.local"
+            self.password = password
+            self.login_requested = True
+            self.close()
 
+    def toggle_password_visibility(self, state):
+        if state == 2:  # Checkbox is checked
+            self.password_input.setEchoMode(QLineEdit.Normal)
+        else:
+            self.password_input.setEchoMode(QLineEdit.Password)
+
+    def closeEvent(self, event):
+        self.destroy()
+        self.closed.emit(self.hostname, self.password, self.login_requested)  # Emit the signal with the hostname and password
+        event.accept()
+
+        
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

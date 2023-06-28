@@ -162,7 +162,7 @@ def convert_datetime(datetime_str):
 class FileExplorer(QWidget):
     def __init__(self, parent=None):
         super(FileExplorer, self).__init__(parent)
-        self.setWindowTitle("Google Drive Explorer")
+        self.setWindowTitle("Drive")
         self.setWindowIcon(QIcon('images/standup_logo.ico'))
 
         

@@ -1,15 +1,44 @@
 #!/bin/ash
-ping -c 1 8.8.8.8 > /dev/null 2>&1
 
-if [ $? -eq 0 ]; then
+# Check if script is running with root privileges
+if [ "$(id -u)" -ne 0 ]; then
+  echo "This script must be run with root privileges. Please use sudo or run as root."
+  exit 1
+fi
+
+# Check internet connectivity
+if ping -c 1 8.8.8.8 > /dev/null 2>&1; then
   echo "Internet is available. Proceeding with commands..."
-  
-  # Add your commands here
-  # For example:
-  echo "Command 1"
-  echo "Command 2"
-  echo "Command 3"
-  
+
+  echo "Updating packages"
+  opkg update || { echo "Failed to update packages."; exit 1; }
+
+  echo "Installing required packages"
+  opkg install git git-http ca-bundle python3 python3-pip pyOnionGpio || { echo "Failed to install packages."; exit 1; }
+
+  echo "Setting up virtual environment"
+  pip3 install virtualenv || { echo "Failed to install virtualenv."; exit 1; }
+  virtualenv /root/Firmware/venv || { echo "Failed to create virtual environment."; exit 1; }
+  source /root/Firmware/venv/bin/activate || { echo "Failed to activate virtual environment."; exit 1; }
+
+  echo "Installing Python packages"
+  mkdir /root/temp
+  export TMPDIR=/root/temp
+  pip install -r requirements || { echo "Failed to install Python packages."; exit 1; }
+  mv /root/Firmware/lib/flow.py venv/lib/python3.6/site-packages/google_auth_oauthlib/flow.py || { echo "Failed to move flow.py."; exit 1; }
+
+  line_to_add="/root/Firmware/run_stand_up.sh &"
+  rc_local_file="/etc/rc.local"
+
+  # Check if the line already exists in rc.local
+  if grep -qF "$line_to_add" "$rc_local_file"; then
+    echo "Line already exists in rc.local. No changes needed."
+  else
+    # Add the line before 'exit 0' in rc.local
+    sed -i "/^exit 0/i $line_to_add" "$rc_local_file" || { echo "Failed to add line to rc.local."; exit 1; }
+    echo "Line added successfully to rc.local."
+  fi
+
 else
   echo "No internet connection found. Please check your internet connection."
 fi
