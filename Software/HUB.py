@@ -12,7 +12,7 @@ import sys
 import paramiko
 import time
 import drive_ui
-import flaskreceive_test
+import dash_data_receive_server
 import config_editor_ui
 import authentification_ui
 
@@ -22,7 +22,7 @@ class DashAppThread(QThread):
         self.hostname = hostname
         self.sensorDataApp = None
     def run(self):
-        self.sensorDataApp = flaskreceive_test.SensorDataApp(self.hostname)
+        self.sensorDataApp = dash_data_receive_server.SensorDataApp(self.hostname)
         self.sensorDataApp.run()
     def quit(self):
         if self.sensorDataApp.server:

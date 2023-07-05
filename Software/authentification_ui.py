@@ -4,14 +4,11 @@ Description: This script implements a login window for authentication. It provid
 Author: [Sami Kaab]
 Date: [2023-07-03]
 """
-# import sys
 from PySide2.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget, QMessageBox, QHBoxLayout, QCheckBox
 from PySide2.QtCore import Signal
 from PySide2.QtGui import QIcon
+import sys
 from helper_functions import get_wifi_name
-
-
-
 
 class LoginWindow(QMainWindow):
     closed = Signal(str, str, bool)  # Add a signal to emit the hostname and password
@@ -93,8 +90,8 @@ class LoginWindow(QMainWindow):
 
         
 
-# if __name__ == "__main__":
-#     app = QApplication(sys.argv)
-#     login_window = LoginWindow()
-#     login_window.show()
-#     sys.exit(app.exec_())
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    login_window = LoginWindow()
+    login_window.show()
+    sys.exit(app.exec_())

@@ -26,8 +26,7 @@ from helper_functions import get_wifi_name
 import os
 import shutil
 import json
-
-
+import sys
 
 
 class ConfigEditor(QMainWindow):
@@ -258,10 +257,8 @@ class ConfigEditor(QMainWindow):
         finally:
             client.close()
 
-
-
-# if __name__ == "__main__":
-#     app = QApplication([])
-#     window = ConfigEditor()
-#     window.show()
-#     app.exec_()
+if __name__ == "__main__":
+    app = QApplication([])
+    window = ConfigEditor()
+    window.show()
+    sys.exit(app.exec_())

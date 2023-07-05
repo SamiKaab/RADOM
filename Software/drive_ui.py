@@ -4,6 +4,7 @@ Description:  This script implements a PySide2 application for controlling a dev
 Author: [Sami Kaab]
 Date: [2023-07-03]
 """
+
 import sys
 import os
 import re
