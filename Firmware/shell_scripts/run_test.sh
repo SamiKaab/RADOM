@@ -1,4 +1,5 @@
 #!/bin/ash
+source /root/Firmware/venv/bin/activate
 
 output=$(python /root/Firmware/test_programs/rtc_test.py 2>&1)
 

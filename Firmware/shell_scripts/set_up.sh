@@ -24,10 +24,10 @@ if ping -c 1 8.8.8.8 > /dev/null 2>&1; then
   echo "Installing Python packages"
   mkdir /root/temp
   export TMPDIR=/root/temp
-  pip install -r requirements || { echo "Failed to install Python packages."; exit 1; }
+  pip install -r requirements.txt || { echo "Failed to install Python packages."; exit 1; }
   mv /root/Firmware/lib/flow.py venv/lib/python3.6/site-packages/google_auth_oauthlib/flow.py || { echo "Failed to move flow.py."; exit 1; }
 
-  line_to_add="/root/Firmware/shell_scripts/run_stand_up.sh &"
+  line_to_add="source /root/Firmware/shell_scripts/run_stand_up.sh &"
   rc_local_file="/etc/rc.local"
 
   # Check if the line already exists in rc.local
