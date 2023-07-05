@@ -1,3 +1,9 @@
+"""
+File: drive_ui.py
+Description:  This script implements a PySide2 application for controlling a device and displaying sensor data. It provides functionalities for interacting with Google Drive, including browsing files, downloading files, and deleting files.
+Author: [Sami Kaab]
+Date: [2023-07-03]
+"""
 import sys
 import os
 import re
@@ -19,13 +25,9 @@ from PySide2.QtWidgets import (
     QAction,
 )
 from PySide2.QtCore import Qt, QThread, Signal
-from PySide2.QtGui import QCursor, QIcon
-from google_auth_oauthlib.flow import InstalledAppFlow
+from PySide2.QtGui import QIcon
 from googleapiclient.discovery import build
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from googleapiclient.errors import HttpError
-from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
+from googleapiclient.http import MediaIoBaseDownload
 from google.oauth2 import service_account
 import requests
 
@@ -353,13 +355,12 @@ class DeleteThread(QThread):
     def update_progress(self, progress):
         self.progressChanged.emit(progress)
 
-def main():
+    
+
+if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = FileExplorer()
     window.resize(400, 300)  # Set the window size to 800x600 pixels
 
     window.show()
     sys.exit(app.exec_())
-
-if __name__ == "__main__":
-    main()    

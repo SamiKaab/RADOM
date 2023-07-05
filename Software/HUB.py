@@ -1,19 +1,20 @@
-from collections.abc import Callable, Iterable, Mapping
-from typing import Any
+"""
+File: HUB.py
+Description: This script implements a PySide2 application for controlling a device and displaying sensor data.
+Author: [Sami Kaab]
+Date: [2023-07-03]
+"""
 from PySide2.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QMessageBox,QSplashScreen
 from PySide2.QtWebEngineWidgets import QWebEngineView
-from PySide2.QtCore import QTimer, QCoreApplication, QThread, Qt
+from PySide2.QtCore import QCoreApplication, QThread, Qt
 from PySide2.QtGui import QIcon, QPixmap
 import sys
 import paramiko
 import time
-import threading
 import drive_ui
 import flaskreceive_test
 import config_editor_ui
-import requests
-import waitress
-import authentification
+import authentification_ui
 
 class DashAppThread(QThread):
     def __init__(self, hostname=None):
@@ -24,14 +25,11 @@ class DashAppThread(QThread):
         self.sensorDataApp = flaskreceive_test.SensorDataApp(self.hostname)
         self.sensorDataApp.run()
     def quit(self):
-        print("quitting")
         if self.sensorDataApp.server:
             self.sensorDataApp.hostname = None
             self.sensorDataApp.server.shutdown()
             self.sensorDataApp.server.close()
-        print(self.sensorDataApp.server)
         self.terminate() 
-        print("quitted")  
             
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -72,7 +70,7 @@ class MainWindow(QMainWindow):
         open_config_editor_button.clicked.connect(self.open_config_editor)
         button_layout.addWidget(open_config_editor_button)
 
-        self.start_stop_button = QPushButton("Stop Device", self, enabled=False)
+        self.start_stop_button = QPushButton("Stop Recording", self, enabled=False)
         self.start_stop_button.clicked.connect(self.start_stop_program)
         button_layout.addWidget(self.start_stop_button)
 
@@ -97,10 +95,10 @@ class MainWindow(QMainWindow):
         QCoreApplication.exit()  # Exit the application event loop
 
         
-        
     def get_login(self):
-        self.login_window = authentification.LoginWindow()
+        self.login_window = authentification_ui.LoginWindow()
         self.login_window.closed.connect(lambda hostname, password, login_requested : self.set_login_info(hostname, password, login_requested))
+        self.login_window.setWindowFlags(Qt.WindowStaysOnTopHint)
         self.login_window.show()
     
     def set_login_info(self, hostname, password,login_requested):
@@ -110,7 +108,6 @@ class MainWindow(QMainWindow):
             self.dashAppThread.sensorDataApp.hostname = hostname
             self.connect()
         
-
     def connect(self):
         if self.hostname is None:
             self.get_login()
@@ -129,7 +126,6 @@ class MainWindow(QMainWindow):
                     QMessageBox.information(self, "Connection Successful", "Connected to device")
 
                 except Exception as e:
-                    print(f'Error: {e}')
                     self.ssh_client = None
                     self.hostname = None
                     self.password = None
@@ -156,30 +152,27 @@ class MainWindow(QMainWindow):
                 # Check if the program is running
                 if output:
 
-                    print("Program is running.")
-                    self.start_stop_button.setText("Stop Device")
+                    self.start_stop_button.setText("Stop Recording")
                     return True
                 else:
-                    print("Program is not running.")
-                    self.start_stop_button.setText("Start Device")
+                    self.start_stop_button.setText("Start Recording")
                     return False
 
             except Exception as e:
-                print(f'Error: {e}')
                 return False
         else:
             # add message box to say device is not connected
             QMessageBox.critical(self, "Error", "Device is not connected")
 
     def open_drive(self):
-        # Function to open the drive
-        print("Opening Drive...")
         self.file_explorer = drive_ui.FileExplorer()
         self.file_explorer.show()
     
     def open_config_editor(self):
         if self.ssh_client is not None:
             self.config_editor = config_editor_ui.ConfigEditor(self.hostname, self.password)
+            self.config_editor.setWindowFlags(Qt.WindowStaysOnTopHint)
+
             self.config_editor.show()
         else:
             QMessageBox.critical(self, "Connection Error", "Device is not connected")
@@ -209,10 +202,14 @@ class MainWindow(QMainWindow):
         if self.ssh_client is not None: 
             if device_running:
                 try:
+                    self.start_stop_button.setDisabled(True)
+                    # Execute the command to stop the program
+                    command = 'kill $(pgrep -f main)'
+                    stdin, stdout, stderr = self.ssh_client.exec_command(command)
+                    time.sleep(1)
                     # Execute the command to stop the program
                     command = 'kill -9 $(pgrep -f main)'
                     stdin, stdout, stderr = self.ssh_client.exec_command(command)
-                    self.start_stop_button.setDisabled(True)
                     for i in range(30):
                         time.sleep(1)
                         stillrunning = self.is_device_running()
@@ -221,7 +218,7 @@ class MainWindow(QMainWindow):
                     self.start_stop_button.setDisabled(False)
                     return False
                 except Exception as e:
-                    print(f'Error: {e}')
+                    pass
             else:
                 try:
                     # Execute the command to run the program
@@ -237,7 +234,7 @@ class MainWindow(QMainWindow):
                     self.start_stop_button.setDisabled(False)
                     return False
                 except Exception as e:
-                    print(f'Error: {e}')
+                    pass
         else:
             # add message box to say device is not connected
             QMessageBox.about(self, "Conncetion Error", "Device is not connected")

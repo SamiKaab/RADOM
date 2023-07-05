@@ -1,4 +1,5 @@
 import subprocess
+
 def get_wifi_name():
     # Run the command to get the Wi-Fi network details
     result = subprocess.run(['netsh', 'wlan', 'show', 'interface'], capture_output=True, text=True)

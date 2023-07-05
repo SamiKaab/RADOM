@@ -47,63 +47,35 @@ Ping statistics for 20.43.111.112:
 Approximate round trip times in milli-seconds:
     Minimum = 18ms, Maximum = 18ms, Average = 18ms
 ```
-We can now install the necessary Omega2 and python packages. First update list of available packages:
+We can now install the necessary Omega2 and python packages. Clone the Firmware folder in the repository from the root folder:
 ```sh
-opkg update
+cd ~
+git clone --depth=1 --filter=blob:none https://github.com/SamiKaab/Be-Up-Standing --sparse Firmware
 ```
-Install required Omega2 packages
+then navigate to the Firmware folder and run the setup script:
 ```sh
-opkg install git git-http ca-bundle python3 python3-pip pyOnionGpio
+cd Firmware/shell_scripts
+./setup.sh
 ```
-Install this package to create virtual environments 
+this script will install the necessary packages and set up the Omega2 to run the program on startup.  
+Next run the omega_rename script:
 ```sh
-pip3 install virtualenv
+./omega_rename.sh
 ```
+This script will amongst other things change the default wifi name and password of the omega as well as the device's password.
+Finally run the run_test script:
 ```sh
-cp /usr/lib/python2.7/onionGpio.py /usr/lib/python3.6/
+./run_test.sh
 ```
-Modify the lines in onionGpio.py where there is a print statment to add brackets:  
-`print "some string"` -> `print("some string")`  
-Clone the repository and create a virtual environemnt inside it
-```sh
-git clone https://github.com/SamiKaab/Be-Up-Standing
-cd Be-Up-Standing
-virtualenv venv
-```
-
-Activate the virtual environment and install the required python packages:
-
-```sh
-source venv/bin/activate
-mkdir /root/temp
-export TMPDIR=/root/temp
-pip install -r requirements
-```
-in `venv/lib/python3.6/site-packages/google_auth_oauthlib/flow.py` comment out the lines:  
-```py 
-import webbrowser
-```
-and 
-```py
-if open_browser:   
-    webbrowser.open(auth_url, new=1, autoraise=True)
-```
-the package `webbrowser` cannot be used on the omega.  
-In order for the program to run on boot the following line needs to be added to `/etc/rc.local` right before `exit 0`:
-```sh
-/root/Firmware/run_stand_up.sh &
-```
-
-```sh
-mv lib/flow.py venv/lib/python3.6/site-packages/google_auth_oauthlib/flow.py
-```
-
+This script will check that the sensors (including the rtc) are connected and working correctly.
+once this is done and no errors were encountered your device should be ready for use.
 
 
 # Setting up a google drive API
 The data recorded is uploaded to a google drive using the google drive api. For the program to use the api it is necessary to generate a credentials file.
 You can find instructions on how to set up a google drive api [here](https://developers.google.com/drive/api/quickstart/python).  
 Since we are using a headless device it is not possible for us to generate tokens which are necessary when using a normal google account and require a webbrowser based authentification which we cannot perform. For this reason make sure to link a google service account to the project.
+Once you have generated the credentials file, copy it to the Firmware folder on the Omega2 Pro and rename it "credentials.json".
 
 
 # Usage

@@ -1,5 +1,12 @@
+"""
+File: config_editor_ui.py
+Description: A graphical user interface (GUI) using PySide2. It allows users to configure device parameters and send the configuration to a device. The GUI displays input fields for modifying settings such as sampling period, write period, and ID.
+Author: [Sami Kaab]
+Date: [2023-07-03]
+"""
+
 import configparser
-import subprocess
+
 import paramiko
 from PySide2.QtCore import QTime
 from PySide2.QtWidgets import (
@@ -12,11 +19,15 @@ from PySide2.QtWidgets import (
     QTimeEdit,
     QWidget,
     QMessageBox,
+    QFileDialog,
 )
 from PySide2.QtGui import QIcon
-import authentification
-import time
 from helper_functions import get_wifi_name
+import os
+import shutil
+import json
+
+
 
 
 class ConfigEditor(QMainWindow):
@@ -43,12 +54,12 @@ class ConfigEditor(QMainWindow):
     def __init__(self, hostname=None, password=None):
         super().__init__()
         self.setWindowTitle("Configure")
-        #set icon
         self.setWindowIcon(QIcon('images/standup_logo.ico'))
         
         self.hostname = hostname
         self.username = 'root'
         self.password = password
+        self.credentials_file = None
 
         self.config = configparser.ConfigParser()
         self.values = self.DEFAULT_VALUES.copy()
@@ -63,10 +74,15 @@ class ConfigEditor(QMainWindow):
 
         self.load_config()
         self.create_config_fields()
+        
+        self.select_file_button = QPushButton("Select Credentials File")
+        self.select_file_button.clicked.connect(self.select_json_file)
+        self.layout.addRow("", self.select_file_button)
 
         self.save_button = QPushButton("Save Config")
         self.save_button.clicked.connect(self.save_config)
         self.layout.addRow("", self.save_button)
+
 
     def load_config(self):
         self.config.read("config.ini")
@@ -109,11 +125,10 @@ class ConfigEditor(QMainWindow):
                     value = wifi_name if wifi_name is not None else value
                     value = value.split("-")[1] if "-" in value else og_value
                     value = value.lower()
-                    
+
                 self.values[key] = value
                 line_edit = QLineEdit(value, self)
                 line_edit.textChanged.connect(self.update_value)
-                # detect focus lost
                 line_edit.editingFinished.connect(self.check_values)
                 self.widgets.append(line_edit)
                 self.layout.addRow(label, line_edit)
@@ -128,7 +143,7 @@ class ConfigEditor(QMainWindow):
         value = new_value if new_value is not None else self.values[label]
         self.values[label] = value
         self.save_button.setText("Save Config")
-        self.save_button.clicked.disconnect()  # Disconnect the previous connection
+        self.save_button.clicked.disconnect()
         self.save_button.clicked.connect(self.save_config)
         self.load_config_from_values()
 
@@ -186,15 +201,37 @@ class ConfigEditor(QMainWindow):
             self.config.write(config_file)
 
         self.save_button.setText("Send Config")
-        self.save_button.clicked.disconnect()  # Disconnect the previous connection
+        self.save_button.clicked.disconnect()
         self.save_button.clicked.connect(self.send_config)
 
         self.statusBar().showMessage("Config saved successfully!")
 
+    def select_json_file(self):
+        file_dialog = QFileDialog()
+        self.credentials_file, _ = file_dialog.getOpenFileName(self, "Select credentials File", "", "JSON Files (*.json)")
+        if self.credentials_file is not None and not self.is_service_account_credentials(self.credentials_file):
+            QMessageBox.information(self, "Config Editor", "Invalid JSON file selected\nMake sure that the file is a valid service account credentials file")
+            self.credentials_file = None
+        
+    def is_service_account_credentials(self, json_file_path):
+        try:
+            with open(json_file_path) as file:
+                credentials = json.load(file)
+                if (
+                    credentials.get("type") == "service_account"
+                    and "project_id" in credentials
+                    and "client_email" in credentials
+                    and "private_key" in credentials
+                ):
+                    return True
+        except (IOError, ValueError):
+            return False
+        return False
+
     def send_config(self):
-     
         src = 'config.ini'
         dst = '/root/Firmware/config.ini'
+        credentials_file_dst = '/root/Firmware/credentials.json'
         client = paramiko.SSHClient()
         client.load_system_host_keys()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -203,8 +240,11 @@ class ConfigEditor(QMainWindow):
             with paramiko.Transport(self.hostname, 22) as t:
                 t.connect(username=self.username, password=self.password)
                 sftp = paramiko.SFTPClient.from_transport(t)
-                print("Copying file: %s to path: %s" % (src, dst))
                 sftp.put(src, dst)
+                #check if a credentials file was selected
+                if self.credentials_file is not None:
+                    sftp.put(self.credentials_file, credentials_file_dst)
+                    shutil.copy(self.credentials_file, os.path.join(os.getcwd(), "credentials.json"))
                 sftp.close()
             self.statusBar().showMessage("Config sent successfully!")
             QMessageBox.information(self, "Config Editor", "Config sent successfully!")
@@ -219,8 +259,9 @@ class ConfigEditor(QMainWindow):
             client.close()
 
 
-if __name__ == "__main__":
-    app = QApplication([])
-    window = ConfigEditor()
-    window.show()
-    app.exec_()
+
+# if __name__ == "__main__":
+#     app = QApplication([])
+#     window = ConfigEditor()
+#     window.show()
+#     app.exec_()
