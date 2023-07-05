@@ -55,21 +55,24 @@ git clone --depth=1 --filter=blob:none https://github.com/SamiKaab/Be-Up-Standin
 then navigate to the Firmware folder and run the setup script:
 ```sh
 cd Firmware/shell_scripts
-./setup.sh
+source ./setup.sh
 ```
 this script will install the necessary packages and set up the Omega2 to run the program on startup.  
 Next run the omega_rename script:
 ```sh
-./omega_rename.sh
+source ./omega_rename.sh
 ```
 This script will amongst other things change the default wifi name and password of the omega as well as the device's password.
 Finally run the run_test script:
 ```sh
-./run_test.sh
+source ./run_test.sh
 ```
 This script will check that the sensors (including the rtc) are connected and working correctly.
-once this is done and no errors were encountered your device should be ready for use.
-
+once this is done and no errors were encountered your device should be ready for use.  
+The device should now be ready for use. You can check that the program is running correctly by running the following command:
+```sh
+./run_stand_up.sh
+```
 
 # Setting up a google drive API
 The data recorded is uploaded to a google drive using the google drive api. For the program to use the api it is necessary to generate a credentials file.
@@ -77,11 +80,3 @@ You can find instructions on how to set up a google drive api [here](https://dev
 Since we are using a headless device it is not possible for us to generate tokens which are necessary when using a normal google account and require a webbrowser based authentification which we cannot perform. For this reason make sure to link a google service account to the project.
 Once you have generated the credentials file, copy it to the Firmware folder on the Omega2 Pro and rename it "credentials.json".
 
-
-# Usage
-The Omega2 Pro should now be ready. Turn off and on the device using the slide switch on the side. The program should start automatically. 
-
-|**Recording without internet access**|**Recording with internet access**|**Uploading data to google drive**|**Device sleeping**|
-|:---:|:---:|:---:|:---:|
-|![](https://placehold.co/40x10/08FF30/08FF30)|![blue](https://placehold.co/40x10/1589F0/1589F0)|![blue](https://placehold.co/10x10/00ffff/00ffff)|![blue](https://placehold.co/50x10/ff33ff/ff33ff)|
-|Green fading in and out at 1 second intervals|Blue fading in and out at 1 second intervals|Light blue flashing|purple fading in and out slowly|
