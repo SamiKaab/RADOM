@@ -1,3 +1,9 @@
+"""
+File: human_presence.py
+Description: This script sets up the DFRobot Human Presence Detection board on UART 1 and defines functions to initialise the HPD GPIO pin and read the HPD GPIO pin.
+Author: Sami Kaab
+Date: 2023-07-05
+"""
 
 import lib.onionGpio as onionGpio
 from lib.DFRobot_mmWave import *
@@ -21,10 +27,15 @@ def setup_hpd(appear_latency, disappear_latency, start_distance, stop_distance):
     HPD.hpd_set_distance(start_distance,stop_distance)       # Set detection distance to between 0 and 2m
 
 def init_hdp():
+    """Function to initialise the HPD GPIO pin
+    """
     setup_hpd(0,0,0,1)
     gpioObject  = onionGpio.OnionGpio(HPD_GPIO_PIN)
     status  = gpioObject.setInputDirection()
+    
 def read_presence():
+    """Function to read the HPD GPIO pin
+    """
     gpioObject  = onionGpio.OnionGpio(HPD_GPIO_PIN)
     return int(gpioObject.getValue())
 

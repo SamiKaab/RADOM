@@ -1,3 +1,9 @@
+"""
+File: main.py
+Description: This script runs the main program for the Standup Desk Sensor Bin.
+Author: Sami Kaab
+Date: 2023-07-05
+"""
 import lib.human_presence as human_presence
 from lib.PiicoDev_VL53L1X import PiicoDev_VL53L1X
 import lib.SDL_DS3231 as RTC

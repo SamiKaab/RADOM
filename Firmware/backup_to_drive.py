@@ -1,3 +1,10 @@
+"""
+File: backup_to_drive.py
+Description: This script backs up the data folder to Google Drive.
+Author: Sami Kaab
+Date: 2023-07-05
+"""
+
 import os
 import os.path
 import shutil
@@ -35,29 +42,9 @@ def get_credentials():
     """
     # Check if a token file exists and load the credentials from it if it does
     creds = None
-    # if os.path.exists("token.json"):
-    #     creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-
-    # # If the credentials are invalid or don't exist, obtain new credentials from the user
-    # if not creds or not creds.valid:
-    #     if creds and creds.expired and creds.refresh_token:
-    #         # If the credentials have expired, refresh them
-    #         creds.refresh(Request())
-    #     else:
-    #         # If the credentials don't exist or are invalid, obtain new credentials from the user
-    #         creds = service_account.Credentials.from_service_account_file("be-up-standing-3ef624974c8c.json", scopes=SCOPES)
-    #         # flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-    #         # creds = flow.run_local_server(port=0)
-    #     # # Save the new credentials to a token file
-    #     # with open("token.json","w") as token:
-    #     #     token.write(creds.to_json())
-
-    # # Return the user credentials
     creds = service_account.Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
 
     return creds
-
-
 
 def create_folder(service):
     """

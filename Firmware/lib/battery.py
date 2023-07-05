@@ -9,6 +9,11 @@ import subprocess
 import time
 
 def get_battery_voltage():
+    """This function retrieves the battery voltage level from the power-dock2 command and returns the battery voltage level.
+
+    Returns:
+        float: battery_voltage
+    """
     result = subprocess.check_output(['power-dock2'])
     output = result.decode('utf-8')
     lines = output.split('\n')
@@ -18,9 +23,14 @@ def get_battery_voltage():
             return battery_voltage
         
 def compute_battery_level():
+    """This function calculates the battery percentage based on the voltage range and returns the battery percentage level.
+
+    Returns:
+        float: battery_percentage
+    """
     battery_voltage = get_battery_voltage()
-    full_voltage = 4.1  # Replace with the voltage of a fully charged battery
-    empty_voltage = 2.7  # Replace with the voltage of an empty battery
+    full_voltage = 4.1  # Voltage of a fully charged battery
+    empty_voltage = 2.7  # Voltage of an empty battery
 
     battery_percentage = ((battery_voltage - empty_voltage) / (full_voltage - empty_voltage)) * 100 
     battery_percentage = battery_percentage if battery_percentage < 100 else 100 
