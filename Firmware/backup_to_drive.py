@@ -53,7 +53,7 @@ def get_credentials():
     #     #     token.write(creds.to_json())
 
     # # Return the user credentials
-    creds = service_account.Credentials.from_service_account_file("be-up-standing-3ef624974c8c.json", scopes=SCOPES)
+    creds = service_account.Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
 
     return creds
 

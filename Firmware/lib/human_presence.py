@@ -1,5 +1,5 @@
 
-import onionGpio
+import lib.onionGpio as onionGpio
 from lib.DFRobot_mmWave import *
 
 

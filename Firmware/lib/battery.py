@@ -1,6 +1,13 @@
+"""
+File: battery.py
+Description: This script retrieves the battery voltage level from the power-dock2 command and calculates the battery percentage based on the voltage range. It continuously prints the battery voltage and percentage level until interrupted.
+Author: Sami Kaab
+Date: 2023-07-05
+"""
+
 import subprocess
 import time
-import datetime
+
 def get_battery_voltage():
     result = subprocess.check_output(['power-dock2'])
     output = result.decode('utf-8')
@@ -18,9 +25,10 @@ def compute_battery_level():
     battery_percentage = ((battery_voltage - empty_voltage) / (full_voltage - empty_voltage)) * 100 
     battery_percentage = battery_percentage if battery_percentage < 100 else 100 
     return battery_percentage
+
 if __name__ == "__main__":
     while True:
         battery_level = round(compute_battery_level(),2)
         print(get_battery_voltage())
-        print(datetime.datetime.now(), "Battery Level:", battery_level, "%")
+        print("Battery Level:", battery_level, "%")
         time.sleep(1)
