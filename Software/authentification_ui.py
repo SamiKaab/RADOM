@@ -10,6 +10,9 @@ from PySide2.QtGui import QIcon
 import sys
 from helper_functions import get_wifi_name
 
+"""
+This class implements a login window for authentication. It provides a graphical user interface (GUI) using PySide2 for users to enter their ID and password for the device.
+"""
 class LoginWindow(QMainWindow):
     closed = Signal(str, str, bool)  # Add a signal to emit the hostname and password
 
@@ -63,6 +66,9 @@ class LoginWindow(QMainWindow):
         # Connect the checkbox state change event to the toggle_password_visibility function
         self.show_password_checkbox.stateChanged.connect(self.toggle_password_visibility)
 
+    """
+    This function is called when the login button is clicked. It checks if the ID and password are valid and emits the hostname and password if they are.
+    """
     def login(self):
         user_id = self.id_input.text()
         password = self.password_input.text()
@@ -77,18 +83,22 @@ class LoginWindow(QMainWindow):
             self.login_requested = True
             self.close()
 
+    """
+    This function is called when the checkbox state is changed. It toggles the password visibility.
+    """
     def toggle_password_visibility(self, state):
         if state == 2:  # Checkbox is checked
             self.password_input.setEchoMode(QLineEdit.Normal)
         else:
             self.password_input.setEchoMode(QLineEdit.Password)
 
+    """
+    This function is called when the window is closed. It emits the hostname and password.
+    """
     def closeEvent(self, event):
         self.destroy()
         self.closed.emit(self.hostname, self.password, self.login_requested)  # Emit the signal with the hostname and password
         event.accept()
-
-        
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

@@ -17,33 +17,43 @@ import config_editor_ui
 import authentification_ui
 
 class DashAppThread(QThread):
+    """ This class implements a thread for running the Dash app
+    """
     def __init__(self, hostname=None):
         super().__init__()
         self.hostname = hostname
         self.sensorDataApp = None
+    
     def run(self):
+        """ This method runs the Dash app
+        """
         self.sensorDataApp = dash_data_receive_server.SensorDataApp(self.hostname)
         self.sensorDataApp.run()
+    
     def quit(self):
-        if self.sensorDataApp.server:
+        """ This method quits the Dash app
+        """
+        if self.sensorDataApp.server: # Check if the server is running
             self.sensorDataApp.hostname = None
             self.sensorDataApp.server.shutdown()
             self.sensorDataApp.server.close()
         self.terminate() 
             
 class MainWindow(QMainWindow):
+    """ This class implements a PySide2 application for controlling a device and displaying sensor data.
+    """
     def __init__(self):
         super().__init__()
+        # Create and display the splash screen
         splash_image = QPixmap("images/standupdeskproject_logo.png")
         self.splash = QSplashScreen(splash_image, Qt.WindowStaysOnTopHint)
         self.splash.show()
 
-        
         self.setWindowTitle("Be Up Standing - Not for comercial use, research purposes only")
         self.setGeometry(100, 100, 800, 600)
         self.setWindowIcon(QIcon('images/standup_logo.ico'))
 
-
+        # Initialize variables
         self.file_explorer = None
         self.ssh_client = None
         self.hostname = None
@@ -80,6 +90,7 @@ class MainWindow(QMainWindow):
 
         layout.addLayout(button_layout)  # Add the button layout to the main layout
         
+        # Create a thread for running the Dash app
         self.dashAppThread = DashAppThread()
         self.dashAppThread.start()
         
@@ -87,6 +98,8 @@ class MainWindow(QMainWindow):
                 
         
     def closeEvent(self,event):
+        """ This method is called when the window is closed
+        """
         self.web_view.destroy()
         if self.dashAppThread.isRunning():
             self.dashAppThread.quit()
@@ -94,14 +107,22 @@ class MainWindow(QMainWindow):
         event.accept()
         QCoreApplication.exit()  # Exit the application event loop
 
-        
     def get_login(self):
+        """ This method opens the login window
+        """
         self.login_window = authentification_ui.LoginWindow()
+        # Connect the closed signal to the set_login_info method
         self.login_window.closed.connect(lambda hostname, password, login_requested : self.set_login_info(hostname, password, login_requested))
         self.login_window.setWindowFlags(Qt.WindowStaysOnTopHint)
         self.login_window.show()
     
     def set_login_info(self, hostname, password,login_requested):
+        """ This method sets the login information
+            Args:
+                hostname (str): The hostname of the device
+                password (str): The password of the device
+                login_requested (bool): True if the user clicked the login button
+        """
         if login_requested:
             self.hostname = hostname
             self.password = password
@@ -109,10 +130,12 @@ class MainWindow(QMainWindow):
             self.connect()
         
     def connect(self):
-        if self.hostname is None:
+        """ This method connects to the device via SSH
+        """
+        if self.hostname is None: # If the hostname is not set, open the login window
             self.get_login()
         else:
-            if self.ssh_client is None:
+            if self.ssh_client is None: # If the SSH client is not set, connect to the device
                 try:
                     
                     # Connect to the device via SSH
@@ -122,7 +145,7 @@ class MainWindow(QMainWindow):
                     self.ssh_client =  ssh_client
                     self.connect_button.setText("Disconnect")
                     self.start_stop_button.setDisabled(False)
-                    self.is_device_running()
+                    self.is_device_running() # Check if the program is running on the device
                     QMessageBox.information(self, "Connection Successful", "Connected to device")
 
                 except Exception as e:
@@ -130,7 +153,7 @@ class MainWindow(QMainWindow):
                     self.hostname = None
                     self.password = None
                     QMessageBox.critical(self, "Connection Error", "Could not connect to device")
-            else:
+            else: # If the SSH client is set, disconnect from the device
                 self.start_stop_button.setDisabled(True)
                 self.connect_button.setText("Connect")
                 self.ssh_client.close()    
@@ -140,6 +163,10 @@ class MainWindow(QMainWindow):
                 QMessageBox.information(self, "Connection Closed", "Disconnected from device")
 
     def is_device_running(self):
+        """ This method checks if the program is running on the device
+        Returns:
+            bool: True if the program is running on the device
+        """
         if self.ssh_client is not None:
             try:
                 # Execute the command to check if the program is running
@@ -165,10 +192,14 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Error", "Device is not connected")
 
     def open_drive(self):
+        """ This method opens the drive window
+        """
         self.file_explorer = drive_ui.FileExplorer()
         self.file_explorer.show()
     
     def open_config_editor(self):
+        """ This method opens the config editor window
+        """
         if self.ssh_client is not None:
             self.config_editor = config_editor_ui.ConfigEditor(self.hostname, self.password)
             self.config_editor.setWindowFlags(Qt.WindowStaysOnTopHint)
@@ -178,6 +209,10 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Connection Error", "Device is not connected")
         
     def check_device_stopped(self,i):
+        """ This method checks if the device has stopped
+            Args:
+                i (int): The number of times the method has been called
+        """
         if i > 30:
             command = 'kill $(pgrep -f main)'
             if self.ssh_client is not None:
@@ -197,10 +232,11 @@ class MainWindow(QMainWindow):
             self.start_stop_button.setDisabled(False)
 
     def start_stop_program(self):
+        """ This method starts or stops the program
+        """
         device_running = self.is_device_running()
-        # Function to stop the program
-        if self.ssh_client is not None: 
-            if device_running:
+        if self.ssh_client is not None: # If the SSH client is set
+            if device_running: # If the program is running on the device
                 try:
                     self.start_stop_button.setDisabled(True)
                     # Execute the command to stop the program
@@ -219,14 +255,14 @@ class MainWindow(QMainWindow):
                     return False
                 except Exception as e:
                     pass
-            else:
+            else: # If the program is not running on the device
                 try:
                     # Execute the command to run the program
                     command = '/root/Firmware/shell_scripts/run_stand_up.sh'
                     stdin, stdout, stderr = self.ssh_client.exec_command(command)
                     self.start_stop_button.setDisabled(True)
                     QMessageBox.information(self, "Start up", "The device may take up to 30 seconds to start.")
-                    for i in range(30):
+                    for i in range(30):# wait 30 seconds for the device to start
                         time.sleep(1)
                         stillrunning = self.is_device_running()
                         if stillrunning:

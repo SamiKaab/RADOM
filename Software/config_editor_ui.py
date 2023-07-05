@@ -28,23 +28,25 @@ import shutil
 import json
 import sys
 
-
+"""
+This class implements a configuration window for configuring device parameters. It provides a graphical user interface (GUI) using PySide2 for users to enter their ID and password for the device.
+"""
 class ConfigEditor(QMainWindow):
     DEFAULT_VALUES = {
-        "Sampling Period": "5",
-        "Write Period": "30",
-        "New File Period": "120",
-        "Upload Period": "120",
+        "Sampling Period (s)": "5",
+        "Write Period (s)": "30",
+        "New File Period (s)": "120",
+        "Upload Period (s)": "120",
         "ID": "xxxx",
         "Wake At": "07:30",
         "Sleep At": "17:30",
     }
 
     LABEL_TO_CONFIG_VAR = {
-        "Sampling Period": "SAMPLING_PERIOD",
-        "Write Period": "WRITE_PERIOD",
-        "New File Period": "NEW_FILE_PERIOD",
-        "Upload Period": "UPLOAD_PERIOD",
+        "Sampling Period (s)": "SAMPLING_PERIOD",
+        "Write Period (s)": "WRITE_PERIOD",
+        "New File Period (s)": "NEW_FILE_PERIOD",
+        "Upload Period (s)": "UPLOAD_PERIOD",
         "ID": "ID",
         "Wake At": "WAKE_AT",
         "Sleep At": "SLEEP_AT",
@@ -55,11 +57,13 @@ class ConfigEditor(QMainWindow):
         self.setWindowTitle("Configure")
         self.setWindowIcon(QIcon('images/standup_logo.ico'))
         
+        # Initialize variables
         self.hostname = hostname
         self.username = 'root'
         self.password = password
         self.credentials_file = None
 
+        # Create widgets
         self.config = configparser.ConfigParser()
         self.values = self.DEFAULT_VALUES.copy()
 
@@ -82,7 +86,10 @@ class ConfigEditor(QMainWindow):
         self.save_button.clicked.connect(self.save_config)
         self.layout.addRow("", self.save_button)
 
-
+    
+    """
+    Loads the configuration from the config.ini file.
+    """
     def load_config(self):
         self.config.read("config.ini")
         if "DEFAULT" in self.config:
@@ -92,6 +99,9 @@ class ConfigEditor(QMainWindow):
                     self.values[key] = self.config["DEFAULT"][config_key]
 
     def load_config_from_values(self):
+        """
+        Loads the configuration from the values dictionary.
+        """
         for key, value in self.values.items():
             for label in self.labels:
                 if label.text() == key:
@@ -106,6 +116,9 @@ class ConfigEditor(QMainWindow):
                         widget.setTime(QTime.fromString(value, "HH:mm"))
 
     def create_config_fields(self):
+        """
+        Creates the configuration fields for the GUI.
+        """
         for key, value in self.values.items():
             label = QLabel(key, self)
 
@@ -134,7 +147,17 @@ class ConfigEditor(QMainWindow):
 
             self.labels.append(label)
 
+    """
+    Updates the value of a configuration field in the GUI.
+
+    Args:
+        value (str): The new value entered in the input widget.
+
+    Returns:
+        None
+    """
     def update_value(self, value):
+            
         sender = self.sender()
         index = self.widgets.index(sender)
         label = self.labels[index].text()
@@ -146,11 +169,20 @@ class ConfigEditor(QMainWindow):
         self.save_button.clicked.connect(self.save_config)
         self.load_config_from_values()
 
+    """
+    Checks the validity of the configuration values and corrects them if necessary.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
     def check_values(self):
-        sampling_period = int(self.values["Sampling Period"]) if self.values["Sampling Period"] else 1
-        write_period = int(self.values["Write Period"]) if self.values["Write Period"] else 1
-        new_file_period = int(self.values["New File Period"]) if self.values["New File Period"] else 1
-        upload_period = int(self.values["Upload Period"]) if self.values["Upload Period"] else 1
+        sampling_period = int(self.values["Sampling Period (s)"]) if self.values["Sampling Period (s)"] else 1
+        write_period = int(self.values["Write Period (s)"]) if self.values["Write Period (s)"] else 1
+        new_file_period = int(self.values["New File Period (s)"]) if self.values["New File Period (s)"] else 1
+        upload_period = int(self.values["Upload Period (s)"]) if self.values["Upload Period (s)"] else 1
         error_found = False
         if write_period < sampling_period:
             write_period = sampling_period * 2
@@ -164,21 +196,31 @@ class ConfigEditor(QMainWindow):
             upload_period = new_file_period * 2
             error_found = True
 
-        self.values["Sampling Period"] = str(sampling_period)
-        self.values["Write Period"] = str(write_period)
-        self.values["New File Period"] = str(new_file_period)
-        self.values["Upload Period"] = str(upload_period)
+        self.values["Sampling Period (s)"] = str(sampling_period)
+        self.values["Write Period (s)"] = str(write_period)
+        self.values["New File Period (s)"] = str(new_file_period)
+        self.values["Upload Period (s)"] = str(upload_period)
         if error_found:
             QMessageBox.information(
                 self,
                 "Config Editor",
-                "Invalid values have been corrected\n\nUpload Period >= New File Period >= Write Period >= Sampling Period",
+                "Invalid values have been corrected\n\nUpload Period (s) >= New File Period (s) >= Write Period (s) >= Sampling Period (s)",
             )
         self.load_config_from_values()
 
+    """
+    Checks the validity of a configuration value for a specific label.
+
+    Args:
+        label (str): The label associated with the configuration field.
+        value (str): The value to be checked.
+
+    Returns:
+        str: The corrected value if it is valid, or None if it is invalid.
+    """
     @staticmethod
     def check_value(label, value):
-        if label in ("Sampling Period", "Write Period", "New File Period", "Upload Period"):
+        if label in ("Sampling Period (s)", "Write Period (s)", "New File Period (s)", "Upload Period (s)"):
             if value != "":
                 try:
                     v = int(value)
@@ -189,6 +231,15 @@ class ConfigEditor(QMainWindow):
 
         return value
 
+    """
+    Saves the configuration values to the config.ini file.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
     def save_config(self):
         for key, value in self.values.items():
             config_key = self.LABEL_TO_CONFIG_VAR[key]
@@ -205,6 +256,15 @@ class ConfigEditor(QMainWindow):
 
         self.statusBar().showMessage("Config saved successfully!")
 
+    """
+    Opens a file dialog to select a JSON credentials file.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
     def select_json_file(self):
         file_dialog = QFileDialog()
         self.credentials_file, _ = file_dialog.getOpenFileName(self, "Select credentials File", "", "JSON Files (*.json)")
@@ -212,6 +272,15 @@ class ConfigEditor(QMainWindow):
             QMessageBox.information(self, "Config Editor", "Invalid JSON file selected\nMake sure that the file is a valid service account credentials file")
             self.credentials_file = None
         
+    """
+    Checks if a JSON file is a valid service account credentials file.
+
+    Args:
+        json_file_path (str): The path of the JSON file.
+
+    Returns:
+        bool: True if the JSON file is a valid service account credentials file, False otherwise.
+    """
     def is_service_account_credentials(self, json_file_path):
         try:
             with open(json_file_path) as file:
@@ -227,6 +296,15 @@ class ConfigEditor(QMainWindow):
             return False
         return False
 
+    """
+    Sends the configuration file and credentials file (if selected) to the device.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
     def send_config(self):
         src = 'config.ini'
         dst = '/root/Firmware/config.ini'

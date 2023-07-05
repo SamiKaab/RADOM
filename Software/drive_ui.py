@@ -62,6 +62,14 @@ def get_credentials():
     return creds
 
 def get_path(service, item_id, path=''):
+    """ Get the path of a file or folder in Google Drive. 
+    Args:
+        service (googleapiclient.discovery.Resource): The Google Drive service.
+        item_id (str): The ID of the file or folder.
+        path (str): The path of the file or folder.
+    Returns:
+        (str): The path of the file or folder (including the file or folder name
+    """
     file = service.files().get(fileId=item_id, fields='id, name, parents').execute()
     name = file.get('name')
     parents = file.get('parents')
@@ -71,9 +79,23 @@ def get_path(service, item_id, path=''):
     return os.path.join(path, name)
 
 def sanitize_name(name):
+    """ Sanitize a file or folder name to remove invalid characters.
+    Args:
+        name (str): The name of the file or folder.
+    Returns:
+        (str): The sanitized name of the file or folder.
+    """
     return re.sub(r'[*?:"<>|]', "_", name)
 
 def manage_file(drive_service, item_id='root', action='download', output_dir='DataBackup', progress_callback=None):
+    """ Download or delete a file or folder from Google Drive.
+    Args:
+        drive_service (googleapiclient.discovery.Resource): The Google Drive service.
+        item_id (str): The ID of the file or folder.
+        action (str): The action to perform on the file or folder. Can be 'download' or 'delete'.
+        output_dir (str): The directory to download the file or folder to.
+        progress_callback (function): A function to call to report the progress of the download or delete operation.
+    """
     item_response = drive_service.files().get(fileId=item_id, fields="id, name, mimeType, parents").execute()
     item_name = item_response.get("name", "")
     item_mime_type = item_response.get("mimeType", "")
@@ -130,6 +152,14 @@ def manage_file(drive_service, item_id='root', action='download', output_dir='Da
 
 
 def list_files(service, folder_id=None):
+    """ List the files and folders in a folder in Google Drive.
+    Args:
+        service (googleapiclient.discovery.Resource): The Google Drive service.
+        folder_id (str): The ID of the folder to list the files and folders in.
+    Returns:
+        (list): A list of files and folders in the folder.
+    """
+    
     if folder_id:
         results = service.files().list(
             q=f"'{folder_id}' in parents",
@@ -143,6 +173,13 @@ def list_files(service, folder_id=None):
     return items
 
 def convert_size(size_in_bytes):
+    """ Convert the size of a file from bytes to a human-readable format.
+    Args:
+        size_in_bytes (int): The size of the file in bytes.
+    Returns:
+        (str): The size of the file in a human-readable format.
+    """
+    
     units = ['B', 'KB', 'MB', 'GB','TB']
     unit_index = 0
 
@@ -155,6 +192,13 @@ def convert_size(size_in_bytes):
 
 
 def convert_datetime(datetime_str):
+    """ Convert a datetime string from ISO format to a human-readable format.
+    Args:
+        datetime_str (str): The datetime string in ISO format.
+    Returns:
+        (str): The datetime string in a human-readable format.
+    """
+    
     datetime_obj = datetime.fromisoformat(datetime_str.replace('Z', '+00:00'))
     utc_datetime = datetime_obj.replace(tzinfo=pytz.UTC)
     upload_tz = pytz.timezone(TIMEZONE)
@@ -163,6 +207,8 @@ def convert_datetime(datetime_str):
     return formatted_datetime
 
 class FileExplorer(QWidget):
+    """ A widget to display the files and folders in Google Drive.
+    """
     def __init__(self, parent=None):
         super(FileExplorer, self).__init__(parent)
         self.setWindowTitle("Drive")
@@ -202,18 +248,33 @@ class FileExplorer(QWidget):
             
 
     def closeEvent(self, event):
+        """ Overridden method called when the widget is closed.
+        Args:
+            event (QEvent): The event object.
+        """
         self.destroy()
         
     def refresh(self):
+        """ Clear and repopulate the file tree
+        """
         self.file_tree.clear()
         self.populate_tree()
 
     def sort_tree_by_column(self, column):
+        """ Sort the file tree by the specified column.
+        Args:
+            column (int): The column to sort the file tree by.
+        """
         if column != 2:
             self.file_tree.sortItems(column, Qt.AscendingOrder)
         
     
     def populate_tree(self, parent_item=None):
+        """ Populate the file tree with the files and folders in Google Drive.
+        Args:
+            parent_item (QTreeWidgetItem): The parent item to populate the tree under.
+        """
+        
         if internet_available():
             if self.service== None:
                 self.service = build('drive', 'v3', credentials=self.creds, static_discovery=False)
@@ -241,8 +302,12 @@ class FileExplorer(QWidget):
             QMessageBox.warning(self, "No Internet Connection", "Please check your internet connection and try again.")
                 
                 
-
     def show_context_menu(self, point):
+        """ Show the context menu for the file tree.
+        Args:
+            point (QPoint): The point to show the context menu at.
+        """
+        
         # Get the item at the point
         item = self.file_tree.itemAt
         # Get the item at the point
@@ -262,6 +327,8 @@ class FileExplorer(QWidget):
             context_menu.exec_(self.file_tree.mapToGlobal(point))
 
     def download_all(self):
+        """ Download all files in the file tree.
+        """
         if internet_available():
 
             dialog = QFileDialog()
@@ -278,7 +345,13 @@ class FileExplorer(QWidget):
                 self.download_thread.start()
         else:
             QMessageBox.warning(self, "No Internet Connection", "Please check your internet connection and try again.")
+            
     def download_item(self, item):
+        """ Download the specified item.
+        Args:
+            item (QTreeWidgetItem): The item to download.
+        """
+        
         if internet_available():
             file_id = item.data(0, Qt.UserRole)
 
@@ -298,12 +371,17 @@ class FileExplorer(QWidget):
             QMessageBox.warning(self, "No Internet Connection", "Please check your internet connection and try again.") 
             
     def delete_item(self, item):
+        """ Delete the specified item.
+        Args:
+            item (QTreeWidgetItem): The item to delete.
+        """
         if internet_available():
+            # Get the file ID
             file_id = item.data(0, Qt.UserRole)
             self.progress_bar.setVisible(True)
             self.progress_bar.setValue(0)
             self.progress_bar.setMaximum(100)
-            
+            # Start the delete thread
             self.delete_thread = DeleteThread(self.service, file_id)
             self.delete_thread.progressChanged.connect(self.update_progress)
             self.delete_thread.finished.connect(self.delete_finished)
@@ -313,18 +391,30 @@ class FileExplorer(QWidget):
             QMessageBox.warning(self, "No Internet Connection", "Please check your internet connection and try again.")
             
     def update_progress(self, value):
+        """ Update the progress bar.
+        Args:
+            value (int): The value to set the progress bar to.
+        """
         self.progress_bar.setValue(value)
 
     def download_finished(self):
+        """ Called when the download thread has finished.
+        """
+        
         self.progress_bar.setVisible(False)
         QMessageBox.information(self, "Download", "Download completed.")
 
     def delete_finished(self):
+        """ Called when the delete thread has finished.
+        """
+
         self.progress_bar.setVisible(False)
         QMessageBox.information(self, "Delete", "Delete completed.")
         self.refresh()
 
 class DownloadThread(QThread):
+    """ A thread to download files.
+    """
     progressChanged = Signal(int)
 
     def __init__(self, service, output_dir, file_id=None):
@@ -334,15 +424,25 @@ class DownloadThread(QThread):
         self.file_id = file_id
 
     def run(self):
-        if self.file_id:
+        """ Run the thread.
+        """
+        if self.file_id: # If a file ID was specified
+            # Download the specified file
             manage_file(self.service, self.file_id, action='download', output_dir=self.output_dir, progress_callback=self.update_progress)
         else:
+            # Download all files
             manage_file(self.service, action='download', output_dir=self.output_dir, progress_callback=self.update_progress)
 
     def update_progress(self, progress):
+        """ Update the progress bar.
+        Args:
+            progress (int): The progress value.
+        """
         self.progressChanged.emit(progress)
 
 class DeleteThread(QThread):
+    """ A thread to delete files.
+    """
     progressChanged = Signal(int)
 
     def __init__(self, service, file_id):
@@ -351,9 +451,15 @@ class DeleteThread(QThread):
         self.file_id = file_id
 
     def run(self):
+        """ Run the thread.
+        """
         manage_file(self.service, self.file_id, action='delete', progress_callback=self.update_progress)
 
     def update_progress(self, progress):
+        """ Update the progress bar.
+        Args:
+            progress (int): The progress value.
+        """
         self.progressChanged.emit(progress)
 
     

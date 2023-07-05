@@ -1,3 +1,9 @@
+"""
+File: dash_data_receive_server.py
+Description: This script implements a dashboard to display the sensor data received from the device. It provides a graphical user interface (GUI) using Dash for users to view the sensor data.
+Author: [Sami Kaab]
+Date: [2023-07-03]
+"""
 import requests
 import dash
 from dash import dcc
@@ -6,7 +12,14 @@ from dash.dependencies import Output, Input
 from collections import deque
 import datetime
 import waitress
+import logging
 
+logging.getLogger("waitress.queue").setLevel(logging.WARNING)
+
+
+"""
+This class implements a dashboard to display the sensor data received from the device. It provides a graphical user interface (GUI) using Dash for users to view the sensor data.
+"""
 class SensorDataApp:
     def __init__(self, hostname = None):
         self.hostname = hostname
@@ -84,6 +97,16 @@ class SensorDataApp:
         
 
     def update_data(self, n, window):
+        """ This function is called periodically to update the sensor data displayed on the dashboard. It is called every second by the dcc.Interval component. It is also called when the user changes the window size using the slider.
+            Args:
+                n (int): The number of times the dcc.Interval component has called this function.
+                window (int): The number of data points to display on the graph.
+            Returns:
+                sensor_id (str): The ID of the sensor.
+                distance_data (dict): The data to display on the distance graph.
+                human_presence_data (dict): The data to display on the human presence graph.
+                latest_values (str): The latest sensor values.
+        """
         self.url = f'http://{self.hostname}:5000/sensor-data'
 
         try:
@@ -178,7 +201,6 @@ class SensorDataApp:
     def run(self):
         # self.app.run_server()
         self.server = waitress.serve(self.app.server, host='127.0.0.1', port=8050)
-
 
 
 if __name__ == '__main__':

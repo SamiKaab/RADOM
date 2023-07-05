@@ -1,3 +1,9 @@
+"""
+File: helper_functions.py
+Description: This script implements helper functions for the project
+Author: [Sami Kaab]
+Date: [2023-07-03]
+"""
 import subprocess
 
 def get_wifi_name():
