@@ -83,7 +83,7 @@ class SensorDataApp:
             ),
             dcc.Graph(id="live-graph-distance", animate=True),
             dcc.Graph(id="live-graph-human-presence", animate=True),
-            dcc.Interval(id="graph-update", interval=1000, n_intervals=0),
+            dcc.Interval(id="graph-update", interval=2000, n_intervals=0),
         ]
 
         self.app.callback(
@@ -125,7 +125,6 @@ class SensorDataApp:
                 sensor_id = "Unknown"
                 latest_values = "Latest Values: Unknown"
                 sensor_period = 1
-        
             y_distance = [data['distance']/1000 for data in list(self.sensor_data_queue)[-window:]]
             t = [datetime.datetime.strptime(data['datetime'], "%a, %d %b %Y %H:%M:%S %Z") for data in list(self.sensor_data_queue)[-window:]]
             distance_data = {
@@ -186,7 +185,8 @@ class SensorDataApp:
                 Wake At: {self.sensor_data_queue[-1]['wa']}
                 Sleep At: {self.sensor_data_queue[-1]['sa']}"""
             return config_info, {'data': [distance_data], 'layout': layout_distance}, {'data': [presence_data], 'layout': layout_presence}, latest_values
-        except:
+        except Exception as e:
+            print(e)
             # Handle the connection error
             config_info = ""
             distance_data = {}

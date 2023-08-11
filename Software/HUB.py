@@ -258,7 +258,7 @@ class MainWindow(QMainWindow):
             else: # If the program is not running on the device
                 try:
                     # Execute the command to run the program
-                    command = '/root/Firmware/shell_scripts/run_stand_up.sh'
+                    command = 'source /root/Firmware/shell_scripts/run_stand_up.sh'
                     stdin, stdout, stderr = self.ssh_client.exec_command(command)
                     self.start_stop_button.setDisabled(True)
                     QMessageBox.information(self, "Start up", "The device may take up to 30 seconds to start.")
