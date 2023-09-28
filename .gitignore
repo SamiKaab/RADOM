@@ -1,7 +1,6 @@
 *.json
 __pycache__
 venv
-data
 *.exe
 *.spec
 *.pyc
