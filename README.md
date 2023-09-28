@@ -47,25 +47,29 @@ Ping statistics for 20.43.111.112:
 Approximate round trip times in milli-seconds:
     Minimum = 18ms, Maximum = 18ms, Average = 18ms
 ```
+We first need to install git and ca-bundle in order to be able to clone the repository:
+```sh
+opkg update
+opkg install git git-http ca-bundle
+```
 We can now install the necessary Omega2 and python packages. Clone the Firmware folder in the repository from the root folder:
 ```sh
-cd ~
-git clone --depth=1 --filter=blob:none https://github.com/SamiKaab/Be-Up-Standing --sparse Firmware
+git clone --depth 1 --filter=blob:none https://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@github.com/SamiKaab/Be-Up-Standing && mv ./Be-Up-Standing/Firmware . && rm -r Be-Up-Standing
 ```
 then navigate to the Firmware folder and run the setup script:
 ```sh
-cd Firmware/shell_scripts
-source ./setup.sh
+cd Firmware
+source ./shell_scripts/set_up.sh
 ```
 this script will install the necessary packages and set up the Omega2 to run the program on startup.  
 Next run the omega_rename script:
 ```sh
-source ./omega_rename.sh
+source ./shell_scripts/omega_rename.sh
 ```
 This script will amongst other things change the default wifi name and password of the omega as well as the device's password.
 Finally run the run_test script:
 ```sh
-source ./run_test.sh
+source ./shell_scripts/run_test.sh
 ```
 This script will check that the sensors (including the rtc) are connected and working correctly.
 once this is done and no errors were encountered your device should be ready for use.  

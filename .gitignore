@@ -1,13 +1,12 @@
-test.py
 *.json
-data
-BackedUp
 __pycache__
 venv
+data
 *.exe
 *.spec
 *.pyc
 *.pyo
 *.pyd
+*.csv
 build
 dist

@@ -159,18 +159,20 @@ def list_files(service, folder_id=None):
     Returns:
         (list): A list of files and folders in the folder.
     """
-    
-    if folder_id:
-        results = service.files().list(
-            q=f"'{folder_id}' in parents",
-            pageSize=1000, fields="nextPageToken, files(id,name,mimeType,size,createdTime,modifiedTime)").execute()
-    else:
-        results = service.files().list(
-            q="'root' in parents and mimeType='application/vnd.google-apps.folder'",
-            pageSize=1000, fields="nextPageToken, files(id,name,mimeType,size,createdTime,modifiedTime)").execute()
+    try:
+        if folder_id:
+            results = service.files().list(
+                q=f"'{folder_id}' in parents",
+                pageSize=1000, fields="nextPageToken, files(id,name,mimeType,size,createdTime,modifiedTime)").execute()
+        else:
+            results = service.files().list(
+                q="'root' in parents and mimeType='application/vnd.google-apps.folder'",
+                pageSize=1000, fields="nextPageToken, files(id,name,mimeType,size,createdTime,modifiedTime)").execute()
 
-    items = results.get('files', [])
-    return items
+        items = results.get('files', [])
+        return items
+    except:
+        return []
 
 def convert_size(size_in_bytes):
     """ Convert the size of a file from bytes to a human-readable format.
@@ -292,12 +294,16 @@ class FileExplorer(QWidget):
                     parent_id = parent_item.data(0, Qt.UserRole)
                     items = list_files(self.service, parent_id)
                     for item in items:
-                        tree_item = QTreeWidgetItem(parent_item, [item['name'], convert_datetime(item['modifiedTime']), convert_size(int(item['size']))])
-                        tree_item.setData(0, Qt.UserRole, item['id'])
                         if item['mimeType'] == 'application/vnd.google-apps.folder':
+                            tree_item = QTreeWidgetItem(parent_item, [item['name'], convert_datetime(item['modifiedTime']), 0])#convert_size(int(item['size']))])
+                            tree_item.setData(0, Qt.UserRole, item['id'])
                             tree_item.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
                             tree_item.setExpanded(False)
                             self.populate_tree(tree_item)
+                        else:
+                            tree_item = QTreeWidgetItem(parent_item, [item['name'], convert_datetime(item['modifiedTime']), convert_size(int(item['size']))])
+                            tree_item.setData(0, Qt.UserRole, item['id'])
+                            
         else:
             QMessageBox.warning(self, "No Internet Connection", "Please check your internet connection and try again.")
                 
@@ -411,6 +417,15 @@ class FileExplorer(QWidget):
         self.progress_bar.setVisible(False)
         QMessageBox.information(self, "Delete", "Delete completed.")
         self.refresh()
+        
+    def closeEvent(self, event):
+        """ Overridden method called when the widget is closed.
+        Args:
+            event (QEvent): The event object.
+        """
+        self.destroy()
+        sys.exit()
+    
 
 class DownloadThread(QThread):
     """ A thread to download files.
@@ -471,3 +486,5 @@ if __name__ == "__main__":
 
     window.show()
     sys.exit(app.exec_())
+    
+    

@@ -12,6 +12,14 @@ new_name="standup"  # Specify the new hostname prefix
 # Find the line with the hostname and extract the ID
 id=$(grep "option hostname" /etc/config/system | awk -F"'" '{print $2}' | awk -F"${old_name}" '{print $2}')
 
+# Generate the new device ID
+new_line="DEVICE_ID ='${id}'"
+
+# Replace the old line with the new line in the shared resources file
+sed -i "s|DEVICE_ID = .*|${new_line}|" /root/Firmware/shared_resources.py
+
+echo "Set DEVICE_ID to ${id}" 
+
 # Generate the new hostname
 new_line="option hostname '${new_name}-${id}'"
 

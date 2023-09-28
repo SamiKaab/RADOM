@@ -1,7 +1,9 @@
 Flask
+flask-socketio
 google-api-python-client 
 google-auth-httplib2 
 google-auth-oauthlib
 pyserial
 requests
 smbus2
+dash

@@ -4,429 +4,209 @@ Description: This script runs the main program for the Standup Desk Sensor Bin.
 Author: Sami Kaab
 Date: 2023-07-05
 """
-import lib.human_presence as human_presence
-from lib.PiicoDev_VL53L1X import PiicoDev_VL53L1X
+import time
+
+import threading
+from collections import deque
+from flask import Flask, jsonify,request,render_template
+import plotly.graph_objs as go
+import configparser
+from waitress import serve
+
+
 import lib.SDL_DS3231 as RTC
 import lib.full_color_led as led
-import lib.battery as battery
-
-import time
-from datetime import datetime, timedelta
-import csv
 import backup_to_drive as google_drive
-import threading
-import configparser
-import requests
-import sys
-import signal
-import os
-from flask import Flask, jsonify,request
-from collections import deque
+from lib.battery import compute_battery_level
 
-
-connected = False
-uploading = False
-recording = False
-settingUp = True
-# Create a flag to indicate if the threads should continue running
-running = True
-
-DATA_DIR = "data"
-FILE_HEADER = ["Date time", "Distance(mm)", "Human Present"]
-
-
+from shared_resources import stop_event, CONFIG_FILE
+from sensor_thread import read_write_loop
+from upload_thread import upload_loop
+from led_thread import pulsate_led
 
 sensor_data_queue = deque(maxlen=10)
+status_queue = deque(maxlen=10)
+sensor_datetime = []
+sensor_presence = []
+sensor_distance = []
 
-# Create an empty queue
-my_queue = deque()
+
 
 def signal_handler(sig, frame):
-    # Set the running flag to False when Ctrl-C is pressed
-    global running
-    running = False
-    shutdown_func = request.environ.get('werkzeug.server.shutdown')
-    if shutdown_func is not None:
-        shutdown_func()
+    # Set the stop_event flag to False when Ctrl-C is pressed
+    if not stop_event.is_set():
+        stop_event.set()
+    elif stop_event.is_set():
+        stop_event.clear()
+
+    print("Ctrl-C pressed")
 
 
 
-signal.signal(signal.SIGINT, signal_handler)  # Register the Ctrl-C signal (SIGINT)
-signal.signal(signal.SIGTERM, signal_handler)  
 
 
-def read_write_loop():
-    """
-    Continuously read sensor data and write it to a CSV file.
-
-    This function reads sensor data from the human presence sensor and distance sensor, and stores
-    it in a list. The data is then written to a CSV file with the specified file name every `WRITE_PERIOD`
-    seconds.
-
-    Returns:
-        None.
-    """
-    global running
+def internet_check_loop(led_status_queue):
+    while True:
+        if not stop_event.is_set():
+            try:
+                connected = google_drive.is_internet_available()
+                led_status_queue.append(("connected", connected))
+            except:
+                pass
+        time.sleep(5)   
+    print("Internet check thread stopped")
 
 
-    # Initialize the list of data to be written to the CSV file and turn on the white LED to indicate data collection
-    data = [FILE_HEADER]
-    lastWriteTime = rtc.read_datetime()
-    lastNewFileTime = rtc.read_datetime()
-    fileName = os.path.join(DATA_DIR,f"{ID}_{lastNewFileTime}") 
-
-    # Continuously read sensor data and write it to a CSV file
-    while running:
-        if device_should_record():
-            recording = True
-            my_queue.append(("recording", recording))
-
-            # Read data from sensors
-            now = rtc.read_datetime()
-            hp = human_presence.read_presence()
-            # hp = "yes" if hp else "no"
-            distance = distSensor.read()
-            battery_level = round(battery.compute_battery_level(),2)
-            # Append data to the list
-            line = [now, distance, hp]
-            data.append(line)
-            graph_data = [now, distance, hp, battery_level]
-            sensor_data_queue.append(graph_data)
-
-            #print("{now} {distance} {hp}".format(distance=distance, hp=humanPresent, now=now))
-
-            elapsed = now - lastNewFileTime
-            if elapsed > timedelta(seconds=NEW_FILE_PERIOD):
-                write_data_to_file(fileName, data)
-                data = [FILE_HEADER]
-                lastWriteTime = now
-                os.rename(fileName,f"{fileName}.csv")
-                fileName = os .path.join(DATA_DIR,f"{ID}_{now}")
-                lastNewFileTime = now
-                
-            # Write data to CSV file after set amount of time has elapsed
-            elapsed = now - lastWriteTime
-            if elapsed > timedelta(seconds=WRITE_PERIOD):
-                write_data_to_file(fileName, data)
-                #print("\nWrote data to file\n")
-
-                # Reset data and time for the next write interval
-                data = []
-                lastWriteTime = now
-
-            # Wait for the specified sampling period before collecting more data
-            time.sleep(SAMPLING_PERIOD)
-        else:
-            recording = False
-            my_queue.append(("recording", recording))
-
-            #print(f"recording will wake in {seconds_until_wake()}")
-            time.sleep(SAMPLING_PERIOD)
-    recording = False
-    my_queue.append(("recording", recording))
-
-    
-
-def internet_check_loop():
-    global running
-    while running:
-        try:
-            connected = google_drive.is_internet_available()
-            my_queue.append(("connected", connected))
-        except:
-            pass
-
-def upload_loop():
-    """
-    Periodically upload the sensor data to Google Drive.
-
-    This function checks for an internet connection and, if available, updates the real-time clock (RTC)
-    module with the current time from the internet. It then backs up the sensor data to Google Drive.
-    The status of the backup process is indicated using the red LED.
-
-    Returns:
-        None.
-    """
-    global running
-
-    # Update RTC with the current time if internet connection is available
-    if google_drive.is_internet_available():
-        dt = get_time_from_internet()
-        rtc.write_datetime(dt)
-    # else:
-        # If internet connection is not available, turn on the red LED to indicate an error
-        #print("no internet")
-        
-
-    # Continuously check for an internet connection and backup data to Google Drive
-    
-    while running:
-        internet = google_drive.is_internet_available()
-        if internet:
-                dt = get_time_from_internet()
-                rtc.write_datetime(dt)
-        if device_should_record():
-            # Check if internet connection is available
-            if internet:
-                uploading = True
-                my_queue.append(("uploading", uploading))
-
-                # connected = True
-
-                # Back up data to Google Drive and turn off the red LED to indicate success
-                file_list = [file for file in os.listdir(DATA_DIR) if file.endswith(".csv")]
-                try:
-                    google_drive.backup_files(file_list)
-                except:
-                    print("problem encountered while uploading")            
-                uploading = False
-                my_queue.append(("uploading", uploading))
-
-            else:
-                # If internet connection is not available, turn off the red LED and #print a message to the console
-                #print("\nWill back up later\n")
-                # connected = False
-                uploading = False
-                my_queue.append(("uploading", uploading))
-            # Wait for the specified upload period before checking for an internet connection again
-            time.sleep(UPLOAD_PERIOD)
-        
-        else:
-            #print(f"upload will wake in {seconds_until_wake()}")
-            time.sleep(UPLOAD_PERIOD)
-    uploading = False
-    my_queue.append(("uploading", uploading))
-    # connected = False
-
-def get_time_from_internet():
-    """
-    Retrieve the current date and time from the internet using the worldtimeapi.org API.
-
-    Returns:
-        A datetime object representing the current date and time.
-    """
-    # Define the URL of the API and specify the timezone to retrieve the time for
-    url = 'http://worldtimeapi.org/api/timezone/Australia/Brisbane'  # or any other timezone you want to get the time for
-
-    # Send a GET request to the API and retrieve the response data
-    response = requests.get(url)
-    data = response.json()
-
-    # Extract the datetime string from the response data and convert it to a datetime object
-    datetime_str = data['datetime'].split("+")[0]
-    dt = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M:%S.%f")
-
-
-    # Return the datetime object
-    return dt
-
-def write_data_to_file(fileName, data):
-    """
-    Write the data to a CSV file with the given file name.
-
-    If the file already exists, the data will be appended to it.
-
-    Args:
-        fileName (str): The name of the file to write to.
-        data (list): A list of data to write to the file.
-
-    Returns:
-        None.
-    """
-    mode = 'a' if os.path.exists(fileName) else 'w'
-    with open(fileName, mode, newline='') as f:
-        # Create a CSV writer object
-        writer = csv.writer(f)
-
-        # Write the data to the CSV file
-        writer.writerows(data)
-
-def device_should_record():
-    current_time = rtc.read_datetime().time()
-    start = datetime.strptime(WAKE_AT, "%H:%M").time()
-    end = datetime.strptime(SLEEP_AT, "%H:%M").time()
-
-    if start <= end:
-        return start <= current_time <= end
-    else:
-        return start <= current_time or current_time <= end  
-    
-def seconds_until_wake():
-    now = rtc.read_datetime()
-    wake_time_today = now.replace(hour=int(WAKE_AT.split(':')[0]), minute=int(WAKE_AT.split(':')[1]), second=0, microsecond=0)
-    
-    if now < wake_time_today:
-        delta = wake_time_today - now
-    else:
-        wake_time_tomorrow = wake_time_today + timedelta(days=1)
-        delta = wake_time_tomorrow - now
-
-    return int(delta.total_seconds())
-
-# Function to pulsate the LED with a specified frequency and color
-def pulsate_led():
-    global running
-    global_var_dict = {
-        "connected" : 0,
-        "uploading" : 0,
-        "recording" : 0,
-        "settingUp" : 0,
-        "running" : 0
-        }
-
-    max_intensity = 255
-    intensity = 0
-    direction = 1
-    while running:
-        while my_queue:
-            key, value = my_queue.popleft()
-            global_var_dict[key] = value
-
-        if global_var_dict["recording"] and not global_var_dict["connected"]:
-            # green
-            frequency = 0.5
-            red = 0
-            green = 255
-            blue = 0
-        elif global_var_dict["recording"] and global_var_dict["connected"] :
-            # blue
-            if uploading:
-                frequency = 20
-                red = 0
-                green = 255
-                blue = 255
-            else:
-                frequency = 0.5
-                red = 0
-                green = 0
-                blue = 255
-        elif not global_var_dict["recording"] and not global_var_dict["settingUp"] :
-            # purple
-            frequency = 0.1
-            red = 255
-            green = 51
-            blue = 255
-        elif global_var_dict["settingUp"] :
-            # yellow
-            frequency = 0.5
-            red = 255
-            green = 170
-            blue = 0
-        else:
-            # red
-            frequency = 0.01
-            red = 255
-            green = 0
-            blue = 0
-        
-        period = 1.0 / frequency
-        if intensity < max_intensity and direction == 1:
-            intensity += 1
-        elif intensity >= max_intensity and direction == 1:
-            direction = 0
-            intensity-=1
-        elif intensity > 0 and direction == 0:
-            intensity -=1
-        elif intensity <= 0 and direction == 0:
-            direction = 1
-            intensity += 1
-            
-        # for intensity in range(0, max_intensity + 1):
-        led.set_led_color(red * intensity // max_intensity, green * intensity // max_intensity, blue * intensity // max_intensity)
-        time.sleep(period / (2 * max_intensity))
-
-        # for intensity in range(max_intensity, -1, -1):
-        #     led.set_led_color(red * intensity // max_intensity, green * intensity // max_intensity, blue * intensity // max_intensity)
-        #     time.sleep(period / (2 * max_intensity))
-    led.set_led_color(255,0,0)
 
 app = Flask(__name__)
 
+@app.route('/')
+def index():
+    config = configparser.ConfigParser()
+    config.read(CONFIG_FILE)
+    ID = config.get('DEFAULT', 'ID')
+    SAMPLING_PERIOD = config.getint('DEFAULT', 'SAMPLING_PERIOD')
+    WAKE_AT = config.get('DEFAULT', 'WAKE_AT')
+    SLEEP_AT = config.get('DEFAULT', 'SLEEP_AT')
+    UPLOAD_PERIOD = config.getint('DEFAULT', 'UPLOAD_PERIOD')
+    NEW_FILE_PERIOD = config.getint('DEFAULT', 'NEW_FILE_PERIOD')
+    LED_INTENSITY = config.getint('DEFAULT', 'LED_INTENSITY') 
+    WRITE_PERIOD = config.getint('DEFAULT', 'WRITE_PERIOD')
 
-@app.route('/sensor-data', methods=['GET'])
-def get_sensor_data():
-    # Check if there is data in the queue
+
+    return render_template('index.html', ID=ID, SP=SAMPLING_PERIOD, WAKE_AT=WAKE_AT, SLEEP_AT=SLEEP_AT, UP=UPLOAD_PERIOD, NFP=NEW_FILE_PERIOD, LED_INTENSITY=LED_INTENSITY, WP=WRITE_PERIOD)
+
+# SSE route to send real-time data to the client
+@app.route('/update_data', methods=['GET'])
+def update_data():
     if len(sensor_data_queue):
-        # Get the latest data from the queue
-        data = sensor_data_queue.popleft()
-        # Create a dictionary with the sensor data
-        sensor_data = {
-            'message' : "ok",
-            'id' : ID,
-            'fs': SAMPLING_PERIOD,
-            'wp': WRITE_PERIOD,
-            'nfp': NEW_FILE_PERIOD,
-            'ufs': UPLOAD_PERIOD,
-            'wa': WAKE_AT,
-            'sa': SLEEP_AT,
-            'datetime': data[0],
-            'distance': data[1],
-            'human_presence': data[2],
-            'battery_level': data[3]
-        }
-        return jsonify(sensor_data)
+        while len(sensor_data_queue):
+            # Get the latest data from the queue
+            sensor_data = sensor_data_queue.popleft()
+            # Send both datetime and distance value to the client
+            datetime_str = sensor_data[0].strftime("%Y-%m-%d %H:%M:%S")  # Format datetime as a string
+            # append the new data to the sensor lists and shift data if the list is longer than 10
+            sensor_datetime.append(datetime_str)
+            sensor_distance.append(sensor_data[1])
+            sensor_presence.append(sensor_data[2])
+            if len(sensor_datetime) > 10:
+                sensor_datetime.pop(0)
+                sensor_distance.pop(0)
+                sensor_presence.pop(0)
+                
+            
+
+        return jsonify({'datetime': sensor_datetime, 'distance': sensor_distance, 'presence': sensor_presence})
     else:
-        return jsonify({'message': 'none'})
+        return jsonify({'data': None})
+
+@app.route('/get_battery', methods=['GET'])
+def get_battery():
+    battery_level = int(compute_battery_level())
+    return jsonify({'battery_level': battery_level})
+
+
+@app.route('/button_click', methods=['POST'])
+def button_click():
+    data = request.json
+    action = data.get('action')
+
+    if action == 'start':
+        print("start")
+        stop_event.clear()
+    elif action == 'stop':
+        print("stop")
+        stop_event.set()
+
+    return jsonify({'message': f'Button pressed for action: {action}'})
+
+@app.route('/get_device_info', methods=['GET'])
+def get_device_id():
+    config = configparser.ConfigParser()
+    config.read(CONFIG_FILE)
+    ID = config.get('DEFAULT', 'ID')
+    SAMPLING_PERIOD = config.getint('DEFAULT', 'SAMPLING_PERIOD')
+    WAKE_AT = config.get('DEFAULT', 'WAKE_AT')
+    SLEEP_AT = config.get('DEFAULT', 'SLEEP_AT')
+    if status_queue:
+        status = status_queue.popleft()
+    
+    return jsonify({'ID': ID, 'SP': SAMPLING_PERIOD, 'WAKE_AT': WAKE_AT, 'SLEEP_AT': SLEEP_AT, 'STATUS': status})
+
+def update_config_file(config_data):
+    config = configparser.ConfigParser()
+    config.read(CONFIG_FILE)
+    for key, value in config_data.items():
+        config.set('DEFAULT', key, value)
+    with open(CONFIG_FILE, 'w') as configfile:
+        config.write(configfile)
+    print("Config file updated")
+
+def check_config_values(config_data):
+    sampling_period = int(config_data['sampling_period'])
+    write_period = int(config_data['write_period'])
+    new_file_period = int(config_data['new_file_period'])
+    upload_period = int(config_data['upload_period'])
+    if sampling_period < 1:
+        config_data['sampling_period'] = str(1)
+    if write_period < sampling_period:
+        write_period = str(sampling_period * 2)
+        config_data['write_period'] = write_period
+
+    if new_file_period < write_period:
+        new_file_period = str(write_period * 2)
+        config_data['new_file_period'] = new_file_period
+        
+    if upload_period < new_file_period:
+        upload_period = str(new_file_period * 2)
+        config_data['upload_period'] = upload_period
+    return config_data
+
+# Receive the form data as JSON and print it
+@app.route('/save_config', methods=['POST'])
+def save_config():
+    try:
+        config_data = request.get_json()
+        print("Received JSON data:")
+        print(config_data)
+        config_data = check_config_values(config_data)
+        print(config_data)
+        update_config_file(config_data)
+        
+        return jsonify({"message": "Data received successfully"})
+    except Exception as e:
+        print(e)
+        return jsonify({"error": str(e)}), 400
+
 
 
 if __name__ == "__main__":
     try:
-        my_queue.append(("settingUp", True))
+        # Create an empty queue
+        led_status_queue = deque()
+        led_status_queue.append(("settingUp", True))
 
-        led_thread = threading.Thread(target=pulsate_led)        # red led loop
+        led_thread = threading.Thread(target=pulsate_led, args=(led_status_queue, status_queue,))  # red led loop
         led_thread.start()
-        print(1)
-        # get user defined variable from config file
-        config = configparser.ConfigParser()
-        config.read('config.ini')
-        SAMPLING_PERIOD = config.getint('DEFAULT', 'SAMPLING_PERIOD')
-        WRITE_PERIOD = config.getint('DEFAULT', 'WRITE_PERIOD')
-        NEW_FILE_PERIOD = config.getint('DEFAULT', 'NEW_FILE_PERIOD')
-        UPLOAD_PERIOD = config.getint('DEFAULT', 'UPLOAD_PERIOD')
-        ID = config.get('DEFAULT', 'ID')
-        WAKE_AT = config.get('DEFAULT', 'WAKE_AT')
-        SLEEP_AT = config.get('DEFAULT', 'SLEEP_AT')
-        print(2)
-        
-
-
-        # init sensors
-        #print("setting up HDP sensor")
-        human_presence.init_hdp()
-        #print("setting up Distance sensor")
-        distSensor = PiicoDev_VL53L1X() 
-        #print("setting up RTC")
         rtc = RTC.SDL_DS3231()
-        
-        
+
         # create and start threads
-        data_thread = threading.Thread(target=read_write_loop)                      # read from sensors and write to file
-        upload_thread = threading.Thread(target=upload_loop)                        # set RTC value and upload files to internet
-        internet_check_thread = threading.Thread(target=internet_check_loop)
+        data_thread = threading.Thread(target=read_write_loop, args=(rtc, led_status_queue, sensor_data_queue,))
+        upload_thread = threading.Thread(target=upload_loop, args=(rtc, led_status_queue,))  # set RTC value and upload files to the internet
+        internet_check_thread = threading.Thread(target=internet_check_loop, args=(led_status_queue,))  # check if the internet is available
+
         # Start all threads
         data_thread.start()
         upload_thread.start()
         internet_check_thread.start()
-        
-        settingUp = False
-        my_queue.append(("settingUp", False))
 
-        app.run(host='0.0.0.0', port=5000)
-        while running:
-            time.sleep(1)
+        # Use Waitress to serve the Flask app
+        serve(app, host='0.0.0.0', port=5000)
 
-
-        # Set running flag to False and wait for threads to finish
-        running = False
         data_thread.join()
         upload_thread.join()
-        led_thread.join()
         internet_check_thread.join()
-        
-        led.set_led_color(0,0,0)
-        
+        led_thread.join()
     except Exception as e:  # other exceptions
-        led.set_led_color(255,0,0)
-        #print(e)
-        
-        
+        print(e)
+
