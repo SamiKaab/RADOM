@@ -94,7 +94,7 @@ def read_write_loop(rtc, status_queue, sensor_data_queue):
             data = [FILE_HEADER]
             lastWriteTime = rtc.read_datetime()
             os.rename(fileName,f"{fileName}.csv")
-        elif stop: # the stop event has been cleared and we need to start recording again
+        else: # the stop event has been cleared and we need to start recording again
             config = configparser.ConfigParser()
             config.read(CONFIG_FILE)
             SAMPLING_PERIOD = config.getint('DEFAULT', 'SAMPLING_PERIOD')
