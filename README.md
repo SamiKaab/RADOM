@@ -30,6 +30,9 @@ and copy the following lines: -->
 
 # Setting up the Omega2 Pro
 
+```sh
+wifisetup add -ssid BadLuck -encr psk2 -password trc5X2pl52X51
+```
 Follow the Omega2 Pro [getting started tutorial](https://onion.io/omega2-pro-get-started/). Once you have done that check that the Omega2 is able to connect to internet using the following command:
 ```sh
 ping duckduckgo.com
