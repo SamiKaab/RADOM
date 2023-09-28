@@ -9,7 +9,6 @@ import time
 import threading
 from collections import deque
 from flask import Flask, jsonify,request,render_template
-import plotly.graph_objs as go
 import configparser
 from waitress import serve
 

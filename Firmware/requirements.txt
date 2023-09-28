@@ -5,5 +5,4 @@ google-auth-oauthlib
 pyserial
 requests
 smbus2
-plotly
 waitress
