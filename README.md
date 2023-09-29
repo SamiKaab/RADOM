@@ -28,8 +28,10 @@ and copy the following lines: -->
 
 
 # wiring scematic
-<!--embed html file-->
-<iframe  src="Documentation/CAD/Wiring Diagram Omega.html" width="500" height="300" width="500"></iframe>
+<!--embed image center a resized with original ratio: Documentation/Wiring_Diagram.png-->
+<p align="center">
+  <img src="Documentation/Wiring_Diagram.png" width="400">
+</p>
 
 # Setting up the Omega2 Pro
 
@@ -55,8 +57,7 @@ Approximate round trip times in milli-seconds:
 ```
 We first need to install git and ca-bundle in order to be able to clone the repository:
 ```sh
-opkg update
-opkg install git git-http ca-bundle
+opkg update && opkg install git git-http ca-bundle
 ```
 We can now install the necessary Omega2 and python packages. Clone the Firmware folder in the repository from the root folder:
 ```sh
@@ -64,8 +65,7 @@ git clone --depth 1 --filter=blob:none https://ghp_MRuVXldB1T4qU0sz3Xpvfn4M22ZNB
 ```
 then navigate to the Firmware folder and run the setup script:
 ```sh
-cd Firmware
-source ./shell_scripts/set_up.sh
+cd Firmware && source ./shell_scripts/set_up.sh
 ```
 this script will install the necessary packages and set up the Omega2 to run the program on startup.  
 Next run the omega_rename script:
@@ -73,15 +73,7 @@ Next run the omega_rename script:
 source ./shell_scripts/omega_rename.sh
 ```
 This script will amongst other things change the default wifi name and password of the omega as well as the device's password.
-Finally run the run_test script:
-```sh
-source ./shell_scripts/run_test.sh
-```
-This script will check that the sensors (including the rtc) are connected and working correctly.
-once this is done and no errors were encountered your device should be ready for use.  
-The device should now be ready for use. You can check that the program is running correctly by running the following command:
-```sh
-./run_stand_up.sh
+The device should now be ready for use. just restart the device.
 ```
 
 # Setting up a google drive API
