@@ -27,6 +27,9 @@ in order to for the program to run on but a service routine needs to be created:
 and copy the following lines: -->
 
 
+# wiring scematic
+<!--embed html file-->
+<iframe  src="Documentation/CAD/Wiring Diagram Omega.html" width="500" height="300" width="500"></iframe>
 
 # Setting up the Omega2 Pro
 
