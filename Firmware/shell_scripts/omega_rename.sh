@@ -36,7 +36,7 @@ id=$(grep "option ssid" /etc/config/wireless | awk -F"'" '{print $2}' | awk -F"$
 new_line="option ssid '${new_name}-${id}'"
 
 # Replace the old line with the new line in the wireless configuration file
-sed -i "s|option ssid.*|${new_line}|" /etc/config/wireless
+sed -i "s|option ssid 'Omega-.*|${new_line}|" /etc/config/wireless
 
 echo "Wifi name changed to ${new_name}-${id}"
 
