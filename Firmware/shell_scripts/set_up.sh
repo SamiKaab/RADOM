@@ -14,7 +14,7 @@ if ping -c 1 8.8.8.8 > /dev/null 2>&1; then
   opkg update || { echo "Failed to update packages."; exit 1; }
 
   echo "Installing required packages"
-  opkg install git git-http ca-bundle python3 python3-pip pyOnionGpio || { echo "Failed to install packages."; exit 1; }
+  opkg install python3 python3-pip pyOnionGpio || { echo "Failed to install packages."; exit 1; }
 
   echo "Setting up virtual environment"
   pip3 install virtualenv || { echo "Failed to install virtualenv."; exit 1; }
