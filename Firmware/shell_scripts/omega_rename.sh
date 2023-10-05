@@ -16,7 +16,7 @@ id=$(grep "option hostname" /etc/config/system | awk -F"'" '{print $2}' | awk -F
 new_line="DEVICE_ID ='${id}'"
 
 # Replace the old line with the new line in the shared resources file
-sed -i "s|DEVICE_ID = .*|${new_line}|" /root/Firmware/shared_resources.py
+sed -i "s|DEVICE_ID =.*|${new_line}|" /root/Firmware/shared_resources.py
 
 echo "Set DEVICE_ID to ${id}" 
 
