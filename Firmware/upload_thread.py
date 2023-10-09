@@ -80,24 +80,22 @@ def upload_loop(rtc, status_queue):
             SLEEP_AT = config.get('DEFAULT', 'SLEEP_AT')
             ID = config.get('DEFAULT', 'ID')
             
-        if (rtc.read_datetime() - last_upload_try).total_seconds() > UPLOAD_PERIOD and not stop:
+        if (rtc.read_datetime() - last_upload_try).total_seconds() > UPLOAD_PERIOD:
             last_upload_try = rtc.read_datetime()
             internet = google_drive.is_internet_available()
             if internet:
-                    dt = get_time_from_internet()
-                    rtc.write_datetime(dt)
-            if device_should_record(WAKE_AT, SLEEP_AT, rtc):
-                # Check if internet connection is available
-                if internet:
-                    status_queue.append(("uploading", True))
-                    # Back up data to Google Drive and turn off the red LED to indicate success
-                    # file_list = [file for file in os.listdir(DATA_DIR) if file.endswith(".csv")]
-                    try:
-                        google_drive.upload(DEVICE_ID)
-                    except Exception as e:
-                        print(f"problem encountered while uploading:\n{e}")            
-                    status_queue.append(("uploading", False))
+                dt = get_time_from_internet()
+                rtc.write_datetime(dt)
+        
+                status_queue.append(("uploading", True))
+                # Back up data to Google Drive and turn off the red LED to indicate success
+                # file_list = [file for file in os.listdir(DATA_DIR) if file.endswith(".csv")]
+                try:
+                    google_drive.upload(DEVICE_ID)
+                except Exception as e:
+                    print(f"problem encountered while uploading:\n{e}")            
+                status_queue.append(("uploading", False))
 
-                else:
-                    status_queue.append(("uploading", False))
+            else:
+                status_queue.append(("uploading", False))
     

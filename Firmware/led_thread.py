@@ -9,7 +9,15 @@ def pulsate_led(led_status_queue, status_queue):
     # INITIATE LOGGING
     logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
     logging.info("Pulsate LED thread started")    
-    
+    color = [0, 0, 0]
+
+    colors = []
+    red = [255,0,0]
+    blue = [0,0,255]
+    green = [0,255,0]
+    light_blue = [0,255,255]
+    purple = [255,51,255]
+    yellow = [255,170,0]
     global_var_dict = {
         "connected" : 0,
         "uploading" : 0,
@@ -17,7 +25,7 @@ def pulsate_led(led_status_queue, status_queue):
         "settingUp" : 0,
         "stop_event" : 0
         }
-
+    i = 0
     max_intensity = 255
     intensity = 0
     direction = 1
@@ -39,64 +47,50 @@ def pulsate_led(led_status_queue, status_queue):
                 config.read(CONFIG_FILE)
                 LED_INTENSITY = config.getint('DEFAULT', 'LED_INTENSITY') 
                 max_intensity = int(255 * LED_INTENSITY/100)
-        if stop_event.is_set():
+ 
+        if global_var_dict["uploading"]:
+            frequency = 20
+            colors = [light_blue]
+            if status != "Uploading":
+                status = "Uploading"
+        elif stop_event.is_set():
             stop = True
             # red
-            frequency = 0.5
-            red = 255
-            green = 0
-            blue = 0
+            colors = [red]
+            if global_var_dict["connected"]:
+                colors.append(blue)
             if status != "Not Recording":
                 status = "Not Recording"
         
-        elif global_var_dict["recording"] and not global_var_dict["connected"]:
+        elif global_var_dict["recording"]:
             # green
             frequency = 0.5
-            red = 0
-            green = 255
-            blue = 0
-            if status != "Recording with no internet":
-                status = "Recording with no internet"
+            colors = [green]
+            if global_var_dict["connected"]:
+                colors.append(blue)
+            if status != "Recording":
+                status = "Recording"
 
-        elif global_var_dict["recording"] and global_var_dict["connected"] :
-            # blue
-            if global_var_dict["uploading"]:
-                frequency = 20
-                red = 0
-                green = 255
-                blue = 255
-                if status != "Uploading":
-                    status = "Uploading"
-            else:
-                frequency = 0.5
-                red = 0
-                green = 0
-                blue = 255
-                if status != "Recording with internet":
-                    status = "Recording with internet"
+   
         elif not global_var_dict["recording"] and not global_var_dict["settingUp"] :
             # purple
-            frequency = 0.1
-            red = 255
-            green = 51
-            blue = 255
+            frequency = 0.5
+            colors = [purple]
+            if global_var_dict["connected"]:
+                colors.append(blue)
             if status != "Sleeping":
                 status = "Sleeping"
         elif global_var_dict["settingUp"] :
             # yellow
             frequency = 0.5
-            red = 255
-            green = 170
-            blue = 0
+            colors = [yellow]
             if status != "Setting Up":
                 status = "Setting Up"
             
         else:
             # red
             frequency = 0.01
-            red = 255
-            green = 0
-            blue = 0
+            colors = [red]
         
         period = 1.0 / frequency
         nb_steps = 100
@@ -111,11 +105,17 @@ def pulsate_led(led_status_queue, status_queue):
         elif intensity < step and direction == 0:
             direction = 1
             intensity += step
+            i+=1
         
-        red = int(intensity * red * max_intensity / 255)
-        green = int(intensity * green * max_intensity / 255)
-        blue = int(intensity * blue * max_intensity / 255)
-        led.set_led_color(red, green, blue)
+        i = i%len(colors)
+        color = colors[i]
+        r = color[0]
+        g = color[1]
+        b = color[2]
+        r = int(intensity * r * max_intensity / 255)
+        g = int(intensity * g * max_intensity / 255)
+        b = int(intensity * b * max_intensity / 255)
+        led.set_led_color(r, g, b)
         time.sleep(period/(2*nb_steps))
 
         # for intensity in range(max_intensity, -1, -1):

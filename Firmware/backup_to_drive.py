@@ -155,15 +155,17 @@ def clone_folder_structure(service, local_folder, parent_folder_id=None):
         if os.path.isdir(item_path): # if item is a folder, recursively clone it
             clone_folder_structure(service, item_path, folder_id)
         else: # if item is a file, upload it
-            file_exists = check_if_already_exist(item_path, service, folder_id)
-            if not file_exists:
-                # check if file extension is .csv
-                if item_path.endswith(".csv"):
+            # check if file extension is .csv
+            if item_path.endswith(".csv"):
+                print(f"checking if {item_path} exists")
+                file_exists = check_if_already_exist(item_path, service, folder_id)
+                if not file_exists:
+                    print(f"{item_path} does not exist: uploading")
                     upload_file(service, item_path, folder_id)
-            else:
-                print(f"{item_path} already exists")
-                # delete file
-                os.remove(item_path)
+                else:
+                    print(f"{item_path} already exists")
+                    # delete file
+                    os.remove(item_path)
 
 def upload(drive_root_folder):
     # Get the user credentials for Google Drive
