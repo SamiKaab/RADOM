@@ -46,12 +46,11 @@ def signal_handler(sig, frame):
 
 def internet_check_loop(led_status_queue):
     while True:
-        if not stop_event.is_set():
-            try:
-                connected = google_drive.is_internet_available()
-                led_status_queue.append(("connected", connected))
-            except:
-                pass
+        try:
+            connected = google_drive.is_internet_available()
+            led_status_queue.append(("connected", connected))
+        except:
+            pass
         time.sleep(5)   
     print("Internet check thread stopped")
 
@@ -132,6 +131,19 @@ def get_device_id():
     
     return jsonify({'ID': ID, 'SP': SAMPLING_PERIOD, 'WAKE_AT': WAKE_AT, 'SLEEP_AT': SLEEP_AT, 'STATUS': status})
 
+
+@app.route('/check_password', methods=['POST'])
+def check_password():
+    data = request.json
+    password = data.get('password')
+    config = configparser.ConfigParser()
+    config.read(CONFIG_FILE)
+    correct_password = config.get('DEFAULT', 'PASSWORD')
+    if password == correct_password:
+        return jsonify({'valid': True})
+    else:
+        return jsonify({'valid': False})
+
 def update_config_file(config_data):
     config = configparser.ConfigParser()
     config.read(CONFIG_FILE)
@@ -139,6 +151,7 @@ def update_config_file(config_data):
         config.set('DEFAULT', key, value)
     with open(CONFIG_FILE, 'w') as configfile:
         config.write(configfile)
+    led_status_queue.append(("led_intensity", config_data['led_intensity']))
     print("Config file updated")
 
 def check_config_values(config_data):
