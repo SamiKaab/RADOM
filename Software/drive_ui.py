@@ -223,8 +223,10 @@ class FileExplorer(QWidget):
         self.file_tree.header().sectionClicked.connect(self.sort_tree_by_column)
 
         self.download_button = QPushButton("Download All")
+        self.delete_button = QPushButton("Delete All")
         self.refresh_button = QPushButton("Refresh")
         self.download_button.clicked.connect(self.download_all)
+        self.delete_button.clicked.connect(self.delete_all)
         self.refresh_button .clicked.connect(self.refresh)
         self.file_tree.setContextMenuPolicy(Qt.CustomContextMenu)
         self.file_tree.customContextMenuRequested.connect(self.show_context_menu)
@@ -241,6 +243,7 @@ class FileExplorer(QWidget):
         layout.addWidget(self.file_tree)
         layout.addWidget(self.download_button)
         layout.addWidget(self.refresh_button)
+        layout.addWidget(self.delete_button)
         layout.addWidget(self.progress_bar)
         self.setLayout(layout)
 
@@ -352,6 +355,22 @@ class FileExplorer(QWidget):
         else:
             QMessageBox.warning(self, "No Internet Connection", "Please check your internet connection and try again.")
             
+    def delete_all(self):
+        """ Delete all files in the file tree.
+        """
+        if internet_available():
+            self.progress_bar.setVisible(True)
+            self.progress_bar.setValue(0)
+            self.progress_bar.setMaximum(100)
+            # Start the delete thread
+            self.delete_thread = DeleteThread(self.service, None)
+            self.delete_thread.progressChanged.connect(self.update_progress)
+            self.delete_thread.finished.connect(self.delete_finished)
+            
+            self.delete_thread.start()
+        else:
+            QMessageBox.warning(self, "No Internet Connection", "Please check your internet connection and try again.")
+        
     def download_item(self, item):
         """ Download the specified item.
         Args:
