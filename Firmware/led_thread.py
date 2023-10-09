@@ -23,7 +23,8 @@ def pulsate_led(led_status_queue, status_queue):
         "uploading" : 0,
         "recording" : 0,
         "settingUp" : 0,
-        "stop_event" : 0
+        "stop_event" : 0,
+        "led_intensity" : 100
         }
     i = 0
     max_intensity = 255
@@ -37,8 +38,8 @@ def pulsate_led(led_status_queue, status_queue):
             status_queue.append(status)
         while led_status_queue:
             key, value = led_status_queue.popleft()
-            global_var_dict[key] = value
-            logging.info("Pulsate LED thread received: " + str(key) + " " + str(value))
+            global_var_dict[key] = int(value)
+            max_intensity = int(255 * global_var_dict["led_intensity"]/100)
 
         if not stop_event.is_set() and stop:
             stop = False

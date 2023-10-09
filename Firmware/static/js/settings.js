@@ -1,11 +1,67 @@
-document.getElementById('configureButton').addEventListener('click', function() {
-    var overlay = document.getElementById('overlay');
-    var configFormContainer = document.getElementById('configFormContainer');
+// document.getElementById('configureButton').addEventListener('click', function() {
+//     var overlay = document.getElementById('overlay');
+//     var configFormContainer = document.getElementById('configFormContainer');
     
-    if (overlay && configFormContainer) {
-        overlay.style.display = 'block';
-        configFormContainer.style.display = 'block';
-    }
+//     if (overlay && configFormContainer) {
+//         overlay.style.display = 'block';
+//         configFormContainer.style.display = 'block';
+//     }
+// });
+
+document.getElementById('configureButton').addEventListener('click', function() {
+    // Prompt for a password
+    var password = prompt("Enter the password:");
+
+    // Make an AJAX request to the server to check the password
+    fetch('/check_password', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password: password }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Password is correct
+        var overlay = document.getElementById('overlay');
+        var configFormContainer = document.getElementById('configFormContainer');
+        var elementsToExclude = ['led_intensity', 'saveButton', 'cancelButton'];
+
+        if (overlay && configFormContainer) {
+            overlay.style.display = 'block';
+            configFormContainer.style.display = 'block';
+        }
+        if (data.valid){
+            var formElements = configFormContainer.elements;
+    
+            document.getElementById('sampling_period').disabled = false;
+            document.getElementById('write_period').disabled = false;
+            document.getElementById('new_file_period').disabled = false;
+            document.getElementById('upload_period').disabled = false;
+            document.getElementById('id').disabled = false;
+            document.getElementById('wake_at').disabled = false;
+            document.getElementById('sleep_at').disabled = false;
+            
+        } else {
+            // disable everythin inside the form except the cancel button, save button and led_intensity
+            document.getElementById('sampling_period').disabled = true;
+            document.getElementById('write_period').disabled = true;
+            document.getElementById('new_file_period').disabled = true;
+            document.getElementById('upload_period').disabled = true;
+            document.getElementById('id').disabled = true;
+            document.getElementById('wake_at').disabled = true;
+            document.getElementById('sleep_at').disabled = true;
+            // for element in configForm Container if id is not led_intensity, save button or cancel button :disable
+           
+
+            // Password is incorrect or server response indicates invalid password
+            alert("Incorrect password. Access denied.");
+        }
+    })
+    .catch(error => {
+        // Handle any errors, e.g., network issues or server errors
+        console.error("Error:", error);
+    });
 });
 
 document.getElementById('cancelButton').addEventListener('click', function() {

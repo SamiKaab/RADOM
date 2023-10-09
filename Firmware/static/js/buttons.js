@@ -14,21 +14,40 @@ document.querySelectorAll('.button').forEach(function(button) {
     button.addEventListener('click', function() {
         // Get the 'data-action' attribute value
         var action = this.getAttribute('data-action');
+        var password = prompt("Enter the password:");
 
-        // Send an AJAX request to the Flask server with the action
-        fetch('/button_click', {
+        fetch('/check_password', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ action: action }), // Send the action value
+            body: JSON.stringify({ password: password }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.valid){
+                // Send an AJAX request to the Flask server with the action
+                fetch('/button_click', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ action: action }), // Send the action value
+                });
+
+                // Add the "disabled" class to the clicked button
+                this.classList.add('disabled');
+
+                // Remove the "disabled" class from the other button
+                var otherButton = action === 'start' ? document.querySelector('[data-action="stop"]') : document.querySelector('[data-action="start"]');
+                otherButton.classList.remove('disabled')
+            } else {
+                alert("Incorrect password. Command not allowed");
+            }
+        })
+        .catch(error => {
+            // Handle any errors, e.g., network issues or server errors
+            console.error("Error:", error);
         });
-
-        // Add the "disabled" class to the clicked button
-        this.classList.add('disabled');
-
-        // Remove the "disabled" class from the other button
-        var otherButton = action === 'start' ? document.querySelector('[data-action="stop"]') : document.querySelector('[data-action="start"]');
-        otherButton.classList.remove('disabled')
     });
 });
