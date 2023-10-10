@@ -28,11 +28,7 @@ var layout = {
             yref: 'paper',
             text: 'The height of the bar corresponds to the table height and the color of the bar corresponds to the presence of a person (blue = present, grey = not present)',
             showarrow: false,
-            font: {
-                family: 'calibri',
-                size: 24,
-                color: 'black'
-            }
+            
         }
     ],
 

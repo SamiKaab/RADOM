@@ -10,7 +10,7 @@ body {
 header {
     background-color: #28245c;
     color: #089c04;
-    padding: 10px;
+    padding: 0.5%;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -21,18 +21,19 @@ h1 {
 }
 
 .container {
-    max-width: 400px;
-    margin: 20px auto;
-    padding: 20px;
+    max-width: 20%;
+    margin: 1% auto;
+    padding: 1%;
     background-color: #84a3bd;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    border: 0.25% solid #ddd;
+    border-radius: 0.25%;
+    font-size: 100%;
 }
 
 .device-info {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 20px;
+    margin-bottom: 5%;
 }
 
 .device-info label {
@@ -40,18 +41,18 @@ h1 {
 }
 
 .device-status {
-    font-size: 24px;
+    font-size: 1.2%;
     color: green;
 }
 
 .device-actions {
     display: flex;
     justify-content: center;
-    padding-top: 20px;
+    padding-top: 1%;
 }
 
 .button {
-    padding: 10px 20px;
+    padding: 2% 4%;
     background-color: #007BFF;
     color: #fff;
     border: none;
@@ -96,6 +97,14 @@ h1 {
     left: 50%;
     transform: translate(-50%, -50%);
     font-size: 16px;
+}
+
+#plotly-chart {
+    justify-content: center;
+    align-items: center;
+    width : 100%;
+    font-size: 2px;
+
 }
 
 /* Style for the overlay background */

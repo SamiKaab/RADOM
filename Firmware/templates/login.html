@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeUpStanding Login Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login_styles.css') }}">
+</head>
+<body>
+
+    <!-- Prettified welcome message -->
+    <div id = "welcome-message">
+        <h1>Welcome to the BeUpStanding Project</h1>
+    </div>
+    <div id="login-container">
+        <h2 id = "login-message">Please login to continue</h2>
+        <button class="btn" id="normal-user-btn">Normal User</button>
+        <button class="btn" id="admin-access-btn">Admin</button>
+    </div>
+    <!-- end of the form -->
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2023 BeUpStanding. Created by <span class="author-name">Sami Kaab</span><a class="about" href="https://www.beupstanding.com.au/about-us">About the BeUpStanding project</a></p>
+        </div>
+    </footer>
+     <!-- Admin password overlay -->
+     <div class="overlay" id="admin-overlay">
+        <div class="password-box">
+            <h2>Enter Admin Password</h2>
+            <input type="password" class="password-input" id="admin-password" placeholder="Password">
+            <button id="password-button">Submit</button>
+            <button id="cancel-button">Cancel</button>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/login.js') }}"></script>
+</body>
+</html>

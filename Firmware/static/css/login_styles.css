@@ -1,0 +1,159 @@
+header {
+    background-color: #28245c;
+    color: #089c04;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+h1 {
+    margin: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #689fda;
+}
+
+#login-container {
+    max-width: 400px;
+    margin: 20px auto;
+    padding: 20px;
+    /*center*/
+    text-align: center;
+}
+
+.btn {
+    padding: 10px 20px;
+    background-color: #007BFF;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    margin: 5px;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background-color: #0056b3;
+}
+
+#normal-user-btn {
+    background-color: #28a745;
+}
+
+#normal-user-btn:hover {
+    background-color: #1e7e34;
+}
+
+#admin-access-btn {
+    background-color: #dc3545;
+}
+
+#admin-access-btn:hover {
+    background-color: #c82333;
+}
+
+footer {
+    background-color: #f2f2f2;
+    text-align: center;
+    padding: 1px;
+    font-size: 12px;
+    /* anchor at the bottom */
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    z-index: 999;
+}
+
+.footer-content {
+    color: #333;
+    display: flex;
+}
+
+.author-name {
+    font-weight: bold;
+}
+
+.about {
+    /* anchor at the right */
+    position: absolute;
+    right: 0;
+    margin-right: 10px;
+}
+#welcome-message {
+    text-align: center;
+    
+    margin-top: 10%;
+    margin-bottom: 5%;
+    color: #0b5808;
+    /*make bold*/
+    font-weight: bold;
+    font-size: 200%;
+}
+#login-message {
+    text-align: center;
+    margin-bottom: 5%;
+    color: #383838;
+    /*make bold*/
+    font-weight: bold;
+    font-size: 150%;
+}
+/* Styles for the overlay */
+.overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.password-box {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.password-input {
+    width: 80%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+#password-button {
+    padding: 10px 20px;
+    background-color: #007BFF;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+}
+#password-button:hover {
+    background-color: #0056b3;
+}
+
+#cancel-button {
+    padding: 10px 20px;
+    background-color: #ccc;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+#cancel-button:hover {
+    background-color: #999;
+}
