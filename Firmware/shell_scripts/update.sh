@@ -10,7 +10,11 @@ if ping -c 1 8.8.8.8 > /dev/null 2>&1; then
     # copy files from repo to Firmware folder
     cp -r /root/Be-Up-Standing/Firmware/* ./Firmware 
     rm -r /root/Be-Up-Standing
-
+    echo "Activating virtual environment"
+    source /root/Firmware/venv/bin/activate || { echo "Failed to activate virtual environment."; exit 1; }
+    echo "Installing Python packages"
+    export TMPDIR=/root/temp
+    pip install -r /root/Firmware/requirements.txt || { echo "Failed to install Python packages."; exit 1; }
 else
   echo "No internet connection found. Please check your internet connection."
 fi
