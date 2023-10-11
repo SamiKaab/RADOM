@@ -10,7 +10,15 @@
 </head>
 <body>
     <header>
-        <h1>BeUpStanding</h1>
+        <h1>
+            <button id="Home">BeUpStanding</button>
+            <!--redirect to home page-->
+            <script>
+                document.getElementById("Home").onclick = function () {
+                    location.href = "/";
+                };
+            </script>
+        </h1>
     </header>
 
     <div class="container">

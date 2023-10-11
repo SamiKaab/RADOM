@@ -20,6 +20,20 @@ h1 {
     margin: 0;
 }
 
+#Home {/*style for home button*/
+    background-color: #28245c;
+    color: #089c04;
+    padding: 0.5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 1.2em;
+    font-weight: bold;
+
+}
 .container {
     max-width: 20%;
     margin: 1% auto;
@@ -52,6 +66,7 @@ h1 {
 }
 
 .button {
+    max-height: 1%;
     padding: 2% 4%;
     background-color: #007BFF;
     color: #fff;
