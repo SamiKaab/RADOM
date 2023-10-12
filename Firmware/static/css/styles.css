@@ -146,6 +146,7 @@ h1 {
     border-radius: 10px; /* Rounded corners */
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Box shadow for a raised effect */
     z-index: 101; /* Ensure it's above the overlay */
+    min-width: 20%;
 }
 
 /* Style for form headings */
@@ -166,11 +167,28 @@ input[type="text"],
 input[type="number"],
 input[type="time"],
 input[type="range"] {
-    width: 100%;
+    width: 95%;
     padding: 8px;
     margin-bottom: 10px;
     border: 1px solid #ccc;
     border-radius: 5px;
+}
+
+.collapsible-content {
+    display: none;
+}
+
+.collapsible::after {
+    content: '⮞'; /* Unicode right-pointing triangle (▶) */
+    float: right;
+}
+
+.collapsible-content.open {
+    display: block;
+}
+
+.collapsible.open::after {
+    content: '⮟'; /* Unicode down-pointing triangle (▼) */
 }
 
 /* Style for the "Save" and "Cancel" buttons */
@@ -192,6 +210,13 @@ button[id="cancelButton"] {
 /* style for the cancel button on hover */
 button[id="cancelButton"]:hover {
     background-color: #c82333;
+}
+
+button[id="saveButton"] {
+    background-color: #28a745; /* Blue color for save button */
+}
+button[id="saveButton"]:hover {
+    background-color: #1e7e34;
 }
 
 

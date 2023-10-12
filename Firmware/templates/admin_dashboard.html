@@ -69,7 +69,7 @@
 
     <div id="configFormContainer">
         <form id="configFormInner" action="/save_config" method="POST">
-            <h2>Settings</h2>
+            <h2>Device Settings</h2>
             <label for="id">ID:</label>
             <input type="text" id="id" name="id" value={{ID}}>
             
@@ -83,24 +83,27 @@
             <input type="range" id="led_intensity" name="led_intensity" value={{LED_INTENSITY}} min="0" max="100">
             
             <!-- add text saying advanced settings -->
-            <h3>Advanced Settings</h3>
+            <h3 id="advancedSettingsToggle" class="collapsible">Advanced Device Settings</h3>
             <!-- add seperation with a line -->
             <hr>
 
-            <label for="sampling_period">Sampling Period (seconds):</label>
-            <input type="number" id="sampling_period" name="sampling_period" value={{ SP }} min="1">
-            
-            <label for="write_period">Write Period (seconds):</label>
-            <input type="number" id="write_period" name="write_period" value={{WP}} min="1">
-            
-            <label for="new_file_period">New File Period (seconds):</label>
-            <input type="number" id="new_file_period" name="new_file_period" value={{NFP}} min="1">
-            
-            <label for="upload_period">Upload Period (seconds):</label>
-            <input type="number" id="upload_period" name="upload_period" value={{UP}} min="1">
+            <div id="advancedSettings" class="collapsible-content">
+                <label for="sampling_period">Sampling Period (seconds):</label>
+                <input type="number" id="sampling_period" name="sampling_period" value={{ SP }} min="1">
+                
+                <label for="write_period">Write Period (seconds):</label>
+                <input type="number" id="write_period" name="write_period" value={{WP}} min="1">
+                
+                <label for="new_file_period">New File Period (seconds):</label>
+                <input type="number" id="new_file_period" name="new_file_period" value={{NFP}} min="1">
+                
+                <label for="upload_period">Upload Period (seconds):</label>
+                <input type="number" id="upload_period" name="upload_period" value={{UP}} min="1">
+            </div>
             
             <button class="button" id= "saveButton">Save</button>
             <button class="button" id="cancelButton">Cancel</button>
+            <button class="button" id="wifiSettingsBtn">Wi-Fi Settings</button>
         </form>
     </div>
     <script src="{{ url_for('static', filename='js/settings.js') }}"></script>

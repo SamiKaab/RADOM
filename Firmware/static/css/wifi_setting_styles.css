@@ -1,0 +1,165 @@
+/* styles.css */
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #689fda;
+}
+
+header {
+    background-color: #28245c;
+    color: #089c04;
+    padding: 0.5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+h1 {
+    margin: 0;
+}
+
+#Home {/*style for home button*/
+    background-color: #28245c;
+    color: #089c04;
+    padding: 0.5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 1.2em;
+    font-weight: bold;
+
+}
+
+.button {
+    max-height: 1%;
+    padding: 2% 4%;
+    background-color: #007BFF;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 0 10px;
+}
+
+.button:hover {
+    background-color: #0056b3;
+}
+
+.button.disabled {
+    background-color: #ccc; /* Greyed out background color */
+    color: #888; /* Greyed out text color */
+    pointer-events: none; /* Disable button clicks */
+}
+
+
+
+/* Style for the overlay background */
+.overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    z-index: 100; /* Ensure it's on top of other content */
+}
+
+
+/* Style for form headings */
+h2 {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+
+main {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+}
+
+
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+li {
+    margin: 10px 0;
+}
+
+form {
+    display: inline;
+}
+
+/* Style for form labels */
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+
+input, select  {
+    width: 95%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.collapsible-content {
+    display: none;
+}
+
+.collapsible::after {
+    content: '⮞'; /* Unicode right-pointing triangle (▶) */
+    float: right;
+}
+
+.collapsible-content.open {
+    display: block;
+}
+
+.collapsible.open::after {
+    content: '⮟'; /* Unicode down-pointing triangle (▼) */
+}
+
+
+
+footer {
+    background-color: #f2f2f2;
+    text-align: center;
+    padding: 1px;
+    font-size: 12px;
+    /* anchor at the bottom */
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    z-index: 999;
+}
+
+.footer-content {
+    color: #333;
+    display: flex;
+
+}
+
+.author-name {
+    font-weight: bold;
+}
+
+
+.about {
+    /* anchor at to the right */
+    position: absolute;
+    right: 0;
+    margin-right: 10px;
+    
+}

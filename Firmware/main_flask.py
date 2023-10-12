@@ -6,12 +6,19 @@ Date: 2023-07-05
 """
 import time
 import os
+import glob
+
 
 import threading
 from collections import deque
 from flask import Flask, jsonify,request,render_template, session,redirect, url_for
+from flask_session import Session
+import datetime
 import configparser
 from waitress import serve
+import json
+import subprocess
+
 
 
 import lib.SDL_DS3231 as RTC
@@ -56,9 +63,38 @@ def internet_check_loop(led_status_queue):
     print("Internet check thread stopped")
 
 
+def cleanup_expired_sessions(session_dir):
+    now = datetime.datetime.now()
+    for session_file in glob.glob(os.path.join(session_dir, '*')):
+        file_timestamp = datetime.datetime.fromtimestamp(os.path.getmtime(session_file))
+        if now - file_timestamp > app.config['PERMANENT_SESSION_LIFETIME']:
+            os.remove(session_file)
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
+
+
+
+# Configure Flask-Session
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_PERMANENT'] = True
+app.config['SESSION_USE_SIGNER'] = True
+app.config['SESSION_FILE_DIR'] = 'flask_session'
+app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(minutes=1)  # Set the session timeout to 30 minutes
+cleanup_expired_sessions(app.config['SESSION_FILE_DIR'])
+Session(app)
+
+            
+@app.before_request
+def check_session_timeout():
+    if 'user_role' in session:
+        if 'last_activity' not in session:
+            session['last_activity'] = datetime.datetime.now()
+        elif (datetime.datetime.now() - session['last_activity']).total_seconds() > app.config['PERMANENT_SESSION_LIFETIME'].total_seconds():
+            # Session timeout reached; reset user_role
+            session['user_role'] = None
+    session['last_activity'] = datetime.datetime.now()  # Update last_activity for the current request
+
 
 @app.route('/')
 def home():
@@ -141,7 +177,6 @@ def admin_dashboard():
     # Check if the user is authenticated as an admin
     print(f"{session.get('user_role')}")
     if session.get('user_role') == 'admin':
-        session['user_role'] = None
         config = configparser.ConfigParser()
         config.read(CONFIG_FILE)
         ID = config.get('DEFAULT', 'ID')
@@ -172,6 +207,46 @@ def viewer_dashboard():
     WRITE_PERIOD = config.getint('DEFAULT', 'WRITE_PERIOD')
     return render_template('viewer_dashboard.html', ID=ID, SP=SAMPLING_PERIOD, WAKE_AT=WAKE_AT, SLEEP_AT=SLEEP_AT, UP=UPLOAD_PERIOD, NFP=NEW_FILE_PERIOD, LED_INTENSITY=LED_INTENSITY, WP=WRITE_PERIOD)
 
+@app.route('/wifi/settings')
+def wifi_settings():
+    try:
+        output = subprocess.check_output(['/usr/bin/wifisetup', 'list'], stderr=subprocess.STDOUT)
+        # Parse the JSON output to get a list of networks
+        networks = json.loads(output)['results']
+    except subprocess.CalledProcessError as e:
+        # Handle any errors that occur when running the command
+        error_message = e.output
+        networks = []  # Set networks to an empty list
+
+    return render_template('wifi_settings.html', networks=networks)
+
+@app.route('/add', methods=['POST'])
+def add_network():
+    # print the form data from the POST request
+    print(request.get_json())
+    # /usr/bin/wifisetup add -ssid <ssid> -encr <encryption type> -password <password>
+    try:
+        print(f"command: /usr/bin/wifisetup add -ssid {request.get_json()['ssid']} -encr {request.get_json()['encryption']} -password {request.get_json()['password']}")
+        output  = subprocess.check_output(['/usr/bin/wifisetup', 'add', '-ssid', request.get_json()['ssid'], '-encr', request.get_json()['encryption'], '-password', request.get_json()['password']], stderr=subprocess.STDOUT)
+        output = output.decode('utf-8')
+        print(output)
+        if "ERROR" in output:
+            return jsonify({"status": "error", "message": output})
+        else:
+            return jsonify({"status": "success"})
+    except:
+        return jsonify({"status": "error"})
+
+@app.route('/remove/<ssid>', methods=['POST'])
+def remove_network(ssid):
+    print(ssid)
+    try:
+        output = subprocess.check_output(['/usr/bin/wifisetup', 'remove', '-ssid' , ssid], stderr=subprocess.STDOUT)
+        output = output.decode('utf-8')
+        print(output)
+    except:
+        pass
+    return redirect(url_for('wifi_settings'))
 
 def update_config_file(config_data):
     config = configparser.ConfigParser()

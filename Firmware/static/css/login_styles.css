@@ -146,7 +146,7 @@ footer {
 
 #cancel-button {
     padding: 10px 20px;
-    background-color: #ccc;
+    background-color: #dc3545;
     color: #fff;
     border: none;
     border-radius: 5px;
@@ -155,5 +155,5 @@ footer {
     margin-left: 10px;
 }
 #cancel-button:hover {
-    background-color: #999;
+    background-color: #c82333;
 }

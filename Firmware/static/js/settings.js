@@ -8,6 +8,17 @@ document.getElementById('configureButton').addEventListener('click', function() 
     }
 });
 
+document.addEventListener("DOMContentLoaded", function () {
+    const advancedSettingsToggle = document.getElementById("advancedSettingsToggle");
+    const advancedSettings = document.getElementById("advancedSettings");
+
+    advancedSettingsToggle.addEventListener("click", function () {
+        advancedSettings.classList.toggle("open");
+        advancedSettingsToggle.classList.toggle("open");
+
+    });
+});
+
 
 document.getElementById('cancelButton').addEventListener('click', function() {
     console.log('cancelButton clicked');
@@ -60,3 +71,12 @@ document.getElementById('saveButton').addEventListener('click', function() {
         configFormContainer.style.display = 'none';
     }
 });
+
+
+document.getElementById('wifiSettingsBtn').addEventListener('click', function() {
+    event.preventDefault(); // Prevent the default button click behavior
+    event.stopPropagation(); // Stop event propagation
+    //redirect to wifi settings page
+    window.location.href = "/wifi/settings";
+});
+

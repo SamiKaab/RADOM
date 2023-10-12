@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>BeUpStanding</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/wifi_setting_styles.css') }}">
+</head>
+<body>
+    <header>
+        <h1>
+            <button id="Home">BeUpStanding</button>
+            <script>
+                document.getElementById("Home").onclick = function () {
+                    location.href = "/";
+                };
+            </script>
+        </h1>
+    </header>
+
+    <main>
+        <h2>WiFi Networks</h2>
+        <ul>
+            {% for network in networks %}
+                <li>
+                    {{ network.ssid }} ({{ network.encryption }})
+                    <form method="post" action="/remove/{{ network.ssid }}">
+                        <input type="hidden" name="redirect_url" value="/wifi/settings">
+                        <button "button" type="submit">Remove</button>
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
+
+        <h2>Add a New Network</h2>
+        <form id="wifiAddForm" method="post" action="/add">
+            <label for="ssid">SSID:</label>
+            <input type="text" id="ssid" name="ssid" required>
+            <br>
+            <label for="encryption">Encryption Type:</label>
+            <select id="encryption" name="encryption">
+                <option value="psk2">WPA2 (PSK)</option>
+                <option value="psk">WPA (PSK)</option>
+                <option value="wep">WEP</option>
+                <option value="none">Open (No encryption)</option>
+            </select>
+            <br>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+            <br>
+            <button id="addWifiBtn" class= "button">Add Network</button>
+        </form>
+        <script>
+            
+            document.getElementById("addWifiBtn").onclick = function () {
+                event.preventDefault();
+                event.stopPropagation();
+                var formData = {
+                    ssid: document.getElementById("ssid").value,
+                    encryption: document.getElementById("encryption").value,
+                    password: document.getElementById("password").value
+                }
+                var jsondata = JSON.stringify(formData)
+                fetch('/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: jsondata,
+                })  
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status == "success") {
+                        alert("Network added successfully");
+                        location.reload();
+                    } else {
+                        alert("Error adding network: " + data.message);
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+            };
+        </script>
+
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2023 BeUpStanding. Created by <span class="author-name">Sami Kaab</span><a class="about" href="https://www.beupstanding.com.au/about-us">About the BeUpStanding project</a></p>
+        </div>
+    </footer>
+</body>
+</html>
