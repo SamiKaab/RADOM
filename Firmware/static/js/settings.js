@@ -73,10 +73,4 @@ document.getElementById('saveButton').addEventListener('click', function() {
 });
 
 
-document.getElementById('wifiSettingsBtn').addEventListener('click', function() {
-    event.preventDefault(); // Prevent the default button click behavior
-    event.stopPropagation(); // Stop event propagation
-    //redirect to wifi settings page
-    window.location.href = "/wifi/settings";
-});
 

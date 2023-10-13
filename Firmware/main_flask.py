@@ -11,13 +11,14 @@ import glob
 
 import threading
 from collections import deque
-from flask import Flask, jsonify,request,render_template, session,redirect, url_for
+from flask import Flask, jsonify,request,render_template, session,redirect, url_for,Response
 from flask_session import Session
 import datetime
 import configparser
 from waitress import serve
 import json
 import subprocess
+import requests
 
 
 
@@ -209,16 +210,19 @@ def viewer_dashboard():
 
 @app.route('/wifi/settings')
 def wifi_settings():
-    try:
-        output = subprocess.check_output(['/usr/bin/wifisetup', 'list'], stderr=subprocess.STDOUT)
-        # Parse the JSON output to get a list of networks
-        networks = json.loads(output)['results']
-    except subprocess.CalledProcessError as e:
-        # Handle any errors that occur when running the command
-        error_message = e.output
-        networks = []  # Set networks to an empty list
+    if session.get('user_role') == 'admin':
+        try:
+            output = subprocess.check_output(['/usr/bin/wifisetup', 'list'], stderr=subprocess.STDOUT)
+            # Parse the JSON output to get a list of networks
+            networks = json.loads(output)['results']
+        except subprocess.CalledProcessError as e:
+            # Handle any errors that occur when running the command
+            error_message = e.output
+            networks = []  # Set networks to an empty list
 
-    return render_template('wifi_settings.html', networks=networks)
+        return render_template('wifi_settings.html', networks=networks)
+    else:   
+        return render_template('login.html')
 
 @app.route('/add', methods=['POST'])
 def add_network():

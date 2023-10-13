@@ -4,6 +4,7 @@ var xData = [];
 var yData = [];
 // Initialize an array to keep track of the colors for each bar
 var barColors = [];
+var plotlyChart;
 
 // Create an initial empty Plotly chart
 var layout = {
@@ -61,9 +62,46 @@ var config = {
 
   };
 
+function updateTitleFontSize() {
+    var windowWidth = window.innerWidth;
 
+    // You can adjust the font size based on the window width as per your requirements
+    var titleFontSize = 18 * (windowWidth / 1200); // Adjust 1200 to your desired breakpoint
+    var plotWidth = windowWidth // Adjust 800 and 50 to your desired values
+
+    var layout = {
+        title: 'Sensor Data',
+        font: {
+            family: 'calibri',
+            size: titleFontSize
+        },
+        xaxis: {
+            title: 'Time',
+        },
+        yaxis: {
+            title: 'Height (mm)',
+        },
+        annotations: [
+            {
+                x: 0.5,
+                y: 1.1,
+                xref: 'paper',
+                yref: 'paper',
+                text: 'The height of the bar corresponds to the table height and the color of the bar corresponds to the presence of a person (blue = present, grey = not present)',
+                showarrow: false,
+            }
+        ],
+        width: plotWidth,
+    };
+
+    // Update the chart layout with the adjusted font size
+    Plotly.update('plotly-chart', {}, layout);
+}
+
+// Add an event listener to adjust title font size when the window resizes
+window.addEventListener('resize', updateTitleFontSize);
 // ...
-var plotlyChart = Plotly.newPlot('plotly-chart', [{
+plotlyChart = Plotly.newPlot('plotly-chart', [{
     x: xData,
     y: yData,
     // bar chart

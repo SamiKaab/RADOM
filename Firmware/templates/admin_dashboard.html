@@ -5,7 +5,24 @@
     <title>BeUpStanding</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .button-container {
+            display: flex;
+            gap: 1%; /* No space in between buttons */
+        }
 
+        #home-button, #settings-button, #console-button {
+            background: transparent;
+            border: none;
+            font-size:150%;
+        }
+        .button-container i {
+            color: #089c04;
+            cursor: pointer;
+
+        }
+    </style>
     <!-- Include the new JavaScript file -->
 </head>
 <body>
@@ -19,6 +36,40 @@
                 };
             </script>
         </h1>
+        <div class="button-container">
+            <button id="console-button">
+                <i class="fas fa-terminal"></i>
+            </button>
+            
+            <button id="settings-button">
+                <i class="fas fa-cog"></i>
+            </button>
+            <button id="home-button">
+                <i class="fas fa-home"></i>
+            </button>
+        </div>
+        <script>
+            document.getElementById('settings-button').addEventListener('click', function() {
+              
+                //redirect to wifi settings page
+                window.location.href = "/wifi/settings";
+            });
+            
+            document.getElementById("console-button").addEventListener("click", function() {
+                // Construct the URL based on the current hostname and redirect
+                const currentHostname = window.location.hostname;
+                const redirectURL = `http://${currentHostname}:4200`;
+
+                window.location.href = redirectURL;
+            });
+            document.getElementById("home-button").addEventListener("click", function() {
+                // Construct the URL based on the current hostname and redirect
+                const currentHostname = window.location.hostname;
+                const redirectURL = "/";
+
+                window.location.href = redirectURL;
+            });
+        </script>
     </header>
 
     <div class="container">
@@ -56,7 +107,6 @@
             <button class="button" data-action="start">Start</button>
             <button class="button" data-action="stop">Stop</button>
             <script src="{{ url_for('static', filename='js/buttons.js') }}"></script>
-            <button class="button" id="configureButton">Settings</button>
 
         </div>
     </div>
