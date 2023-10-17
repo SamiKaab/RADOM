@@ -10,7 +10,31 @@ const submitPasswordButton = document.getElementById("password-button");
 const cancelPasswordButton = document.getElementById("cancel-button");
 
 adminButton.addEventListener("click", () => {
-    adminOverlay.style.display = "flex";
+    fetch('/session',{
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.user_role === "admin") {
+            // User is already logged in as admin, perform redirection
+            window.location.href = "/admin/dashboard";
+        }
+        else {
+            // User is not logged in as admin, show the overlay
+            adminOverlay.style.display = "flex";
+        }
+    })
+    .catch(error => {
+        // Handle any errors, e.g., network issues or server errors
+        console.error("Error:", error);
+    });
+});
+
+cancelPasswordButton.addEventListener("click", () => {
+    adminOverlay.style.display = "none";
 });
 
 submitPasswordButton.addEventListener("click", () => {
@@ -41,7 +65,3 @@ submitPasswordButton.addEventListener("click", () => {
 });
 
 
-
-cancelPasswordButton.addEventListener("click", () => {
-    adminOverlay.style.display = "none";
-});

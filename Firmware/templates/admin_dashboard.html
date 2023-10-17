@@ -6,23 +6,6 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .button-container {
-            display: flex;
-            gap: 1%; /* No space in between buttons */
-        }
-
-        #home-button, #settings-button, #console-button {
-            background: transparent;
-            border: none;
-            font-size:150%;
-        }
-        .button-container i {
-            color: #089c04;
-            cursor: pointer;
-
-        }
-    </style>
     <!-- Include the new JavaScript file -->
 </head>
 <body>
@@ -49,11 +32,6 @@
             </button>
         </div>
         <script>
-            document.getElementById('settings-button').addEventListener('click', function() {
-              
-                //redirect to wifi settings page
-                window.location.href = "/wifi/settings";
-            });
             
             document.getElementById("console-button").addEventListener("click", function() {
                 // Construct the URL based on the current hostname and redirect
@@ -96,13 +74,13 @@
         </div>
         <script src="{{ url_for('static', filename='js/deviceInfo.js') }}"></script>
 
-        <div class="battery-container">
-            <div class="battery-level" id="battery-level" style="width: {{ battery_level }}%;"></div>
-            <div class="battery-text" id="battery-text">{{ battery_level }}%</div>
-        </div>
-        <script src="{{ url_for('static', filename='js/battery.js') }}"></script>
-        
         <div class="device-actions">
+            
+            <div class="battery-container">
+                <div class="battery-level" id="battery-level" style="width: {{ battery_level }}%;"></div>
+                <div class="battery-text" id="battery-text">{{ battery_level }}%</div>
+            </div>
+            <script src="{{ url_for('static', filename='js/battery.js') }}"></script>
             
             <button class="button" data-action="start">Start</button>
             <button class="button" data-action="stop">Stop</button>
@@ -118,43 +96,126 @@
     <div class="overlay" id="overlay"></div>
 
     <div id="configFormContainer">
-        <form id="configFormInner" action="/save_config" method="POST">
-            <h2>Device Settings</h2>
-            <label for="id">ID:</label>
-            <input type="text" id="id" name="id" value={{ID}}>
+        <!--top bar with close button and title-->
+        <div id="configFormTopBar">
             
-            <label for="wake_at">Start Recording At:</label>
-            <input type="time" id="wake_at" name="wake_at" value={{WAKE_AT}} pattern="[0-9]{2}:[0-9]{2}">
-            
-            <label for="sleep_at">Stop Recording At:</label>
-            <input type="time" id="sleep_at" name="sleep_at" value={{SLEEP_AT}} pattern="[0-9]{2}:[0-9]{2}">
-
-            <label for="led_intensity">LED Intensity:</label>
-            <input type="range" id="led_intensity" name="led_intensity" value={{LED_INTENSITY}} min="0" max="100">
-            
-            <!-- add text saying advanced settings -->
-            <h3 id="advancedSettingsToggle" class="collapsible">Advanced Device Settings</h3>
-            <!-- add seperation with a line -->
-            <hr>
-
-            <div id="advancedSettings" class="collapsible-content">
-                <label for="sampling_period">Sampling Period (seconds):</label>
-                <input type="number" id="sampling_period" name="sampling_period" value={{ SP }} min="1">
-                
-                <label for="write_period">Write Period (seconds):</label>
-                <input type="number" id="write_period" name="write_period" value={{WP}} min="1">
-                
-                <label for="new_file_period">New File Period (seconds):</label>
-                <input type="number" id="new_file_period" name="new_file_period" value={{NFP}} min="1">
-                
-                <label for="upload_period">Upload Period (seconds):</label>
-                <input type="number" id="upload_period" name="upload_period" value={{UP}} min="1">
+            <h2><i class="fas fa-cog"></i> Settings</h2>
+            <button id="closeConfigFormBtn"><i class="fas fa-times"></i></button>
+            <script>
+                document.getElementById("closeConfigFormBtn").onclick = function () {
+                    document.getElementById("configFormContainer").style.display = "none";
+                    document.getElementById("overlay").style.display = "none";
+                };
+            </script>
+        </div>
+        <div id="settingsWindow">
+            <div id="settingsSideBar">
+                <button id="DeviceSettingsBtn" class="sideBarButton">
+                    <i class="fas fa-cog"></i>
+                    &nbsp; DEVICE</button>
+                <button id="WifiSettingsBtn" class="sideBarButton">
+                    <i class="fas fa-wifi"></i>
+                    &nbsp; WIFI
+                </button>
+                <button id="PasswordSettingsBtn" class="sideBarButton">
+                    <i class="fas fa-lock"></i>
+                    &nbsp; PASSWORD
+                </button>
             </div>
+            <div class = "settingsDiv" id ="deviceSettings">
+                <form id="configFormInner" action="/save_config" method="POST">
+                    <h2>Device Settings</h2>
+                    <label for="id">ID:</label>
+                    <input type="text" id="id" name="id" value={{ID}}>
+                    
+                    <label for="wake_at">Start Recording At:</label>
+                    <input type="time" id="wake_at" name="wake_at" value={{WAKE_AT}} pattern="[0-9]{2}:[0-9]{2}">
+                    
+                    <label for="sleep_at">Stop Recording At:</label>
+                    <input type="time" id="sleep_at" name="sleep_at" value={{SLEEP_AT}} pattern="[0-9]{2}:[0-9]{2}">
+
+                    <label for="led_intensity">LED Intensity:</label>
+                    <input type="range" id="led_intensity" name="led_intensity" value={{LED_INTENSITY}} min="0" max="100">
+                    
+                    <!-- add text saying advanced settings -->
+                    <h3 id="advancedSettingsToggle" class="collapsible">Advanced Device Settings</h3>
+                    <!-- add seperation with a line -->
+                    <hr>
+
+                    <div id="advancedSettings" class="collapsible-content">
+                        <label for="sampling_period">Sampling Period (seconds):</label>
+                        <input type="number" id="sampling_period" name="sampling_period" value={{ SP }} min="1">
+                        
+                        <label for="write_period">Write Period (seconds):</label>
+                        <input type="number" id="write_period" name="write_period" value={{WP}} min="1">
+                        
+                        <label for="new_file_period">New File Period (seconds):</label>
+                        <input type="number" id="new_file_period" name="new_file_period" value={{NFP}} min="1">
+                        
+                        <label for="upload_period">Upload Period (seconds):</label>
+                        <input type="number" id="upload_period" name="upload_period" value={{UP}} min="1">
+                    </div>
+                    
+                    <button class="button" id= "saveButton">Save</button>
+                    <button class="button" id="cancelButton">Cancel</button>
+                </form>
+            </div>
+            <div class = "settingsDiv" id="wifiSettings">
+                <h2>WiFi Networks</h2>
+                <ul id = "wifiList">
+                    <!--see setting.js for content-->
+                </ul>
+
+                <h2>Add a New Network</h2>
+                <form id="wifiAddForm" method="post" action="/add">
+                    <div class="form-group">
+                        <label for="ssid">SSID:</label>
+                        <input type="text" id="ssid" name="ssid" required>
+                    </div>
             
-            <button class="button" id= "saveButton">Save</button>
-            <button class="button" id="cancelButton">Cancel</button>
-            <button class="button" id="wifiSettingsBtn">Wi-Fi Settings</button>
-        </form>
+                    <div class="form-group">
+                        <label for="encryption">Encryption Type:</label>
+                        <select id="encryption" name="encryption">
+                            <option value="psk2">WPA2 (PSK)</option>
+                            <option value="psk">WPA (PSK)</option>
+                            <option value="wep">WEP</option>
+                            <option value="none">Open (No encryption)</option>
+                        </select>
+                    </div>
+            
+                    <div class="form-group">
+                        <label for="wifiPassword">Password:</label>
+                        <input type="password" id="wifiPassword" name="wifiPassword" required>
+                    </div>
+            
+                    <button id="addWifiBtn" class="button">Add Network</button>
+                </form>
+                
+            </div>
+            <div class = "settingsDiv" id="passwordSettings">
+                <h2>Change Password</h2>
+                <form name="changePasswordForm">
+                    <div class="form-group">
+                        <label for="oldPassword">Old Password:</label>
+                        <input type="password" id="oldPassword" name="oldPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">New Password:</label>
+                        <input type="password" id="newPassword" name="newPassword" required>
+                    </div>
+                    <div class="form-group">                    
+                        <label for="confirmPassword">Confirm Password:</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" required>
+                    </div>
+                    <button id="chgPswdBtn" class="button">Change Password</button>
+                </form>
+         
+                
+                <!--add a note-->
+                <p id="passwordNote">Note: The password must be at least 8 characters long. This will change the admin password as well as the device's wifi pasword and root pasword.</p>
+            </div>
+        </div>
+            
     </div>
     <script src="{{ url_for('static', filename='js/settings.js') }}"></script>
 

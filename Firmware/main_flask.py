@@ -19,6 +19,7 @@ from waitress import serve
 import json
 import subprocess
 import requests
+import fileinput
 
 
 
@@ -81,7 +82,7 @@ app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_PERMANENT'] = True
 app.config['SESSION_USE_SIGNER'] = True
 app.config['SESSION_FILE_DIR'] = 'flask_session'
-app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(minutes=1)  # Set the session timeout to 30 minutes
+app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(minutes=30)  # Set the session timeout to 30 minutes
 cleanup_expired_sessions(app.config['SESSION_FILE_DIR'])
 Session(app)
 
@@ -89,12 +90,11 @@ Session(app)
 @app.before_request
 def check_session_timeout():
     if 'user_role' in session:
-        if 'last_activity' not in session:
-            session['last_activity'] = datetime.datetime.now()
-        elif (datetime.datetime.now() - session['last_activity']).total_seconds() > app.config['PERMANENT_SESSION_LIFETIME'].total_seconds():
+        if 'last_login' not in session:
+            pass
+        elif (datetime.datetime.now() - session['last_login']).total_seconds() > app.config['PERMANENT_SESSION_LIFETIME'].total_seconds():
             # Session timeout reached; reset user_role
             session['user_role'] = None
-    session['last_activity'] = datetime.datetime.now()  # Update last_activity for the current request
 
 
 @app.route('/')
@@ -169,9 +169,76 @@ def check_password():
     
     if password == correct_password:
         session['user_role'] = 'admin'
+        session['last_login'] = datetime.datetime.now()  # Update last_activity for the current request
+
         return jsonify({'valid': True, 'redirect': url_for('admin_dashboard')})
     else:
         return jsonify({'valid': False})
+    
+
+
+
+@app.route('/change_password', methods=['POST'])
+def change_password():
+    data = request.get_json()
+    print(data)
+    config = configparser.ConfigParser()
+    config.read(CONFIG_FILE)
+    correct_password = config.get('DEFAULT', 'PASSWORD')
+    new_password = data["newPassword"]
+    
+    if data['oldPassword'] == correct_password:
+        print(f"changing password to {new_password}")
+        try:
+            config.set('DEFAULT', 'PASSWORD', new_password)
+            with open(CONFIG_FILE, 'w') as configfile:
+                config.write(configfile)
+        except Exception as e:
+            print(e)
+            return jsonify({"status": "error", "message": str(e)})
+        try:
+            #execute the command: echo -e "new_password\nnew_password" | passwd
+            line  = f"echo -e \"{new_password}\\n{new_password}\" | passwd"
+            subprocess.run(line, shell=True)
+        except Exception as e:
+            print(e)
+            return jsonify({"status": "error", "message": str(e)})
+        #change the omega2 pro password
+        try:
+
+            new_line = f"option key '{new_password}'"
+            inside_iface_ap = False
+            file_path = "/etc/config/wireless"
+            # Iterate through the lines in the file and modify the 'option key' line
+            for line in fileinput.input(file_path, inplace=True):
+                # Check if we are inside the 'iface 'ap'' section
+                if line.strip().startswith("config wifi-iface 'ap'"):
+                    inside_iface_ap = True
+                elif inside_iface_ap and line.strip().startswith("option key '"):
+                    # Replace the current password with the new password
+                    line = f"        option key '{new_password}'\n"
+                    inside_iface_ap = False  # Reset the flag once we've made the change
+                print(line, end='')
+
+            print(f"Wi-Fi password for 'iface 'ap'' updated to: {new_password}")
+            # Restart the Wi-Fi interface: /etc/init.d/network restart
+            subprocess.run(['/etc/init.d/network', 'restart'])
+        except Exception as e:
+            print(e)
+            return jsonify({"status": "error", "message": str(e)})
+
+        return jsonify({"status": "success"})
+    else:
+        return jsonify({"status": "error", "message": "Incorrect password"})
+
+    
+
+@app.route('/session', methods=['GET'])
+def get_session():
+    if 'user_role' in session:
+        return jsonify({'user_role': session['user_role']})
+    else:
+        return jsonify({'user_role': None})
 
 @app.route('/admin/dashboard')
 def admin_dashboard():
@@ -192,7 +259,7 @@ def admin_dashboard():
 
         return render_template('admin_dashboard.html', ID=ID, SP=SAMPLING_PERIOD, WAKE_AT=WAKE_AT, SLEEP_AT=SLEEP_AT, UP=UPLOAD_PERIOD, NFP=NEW_FILE_PERIOD, LED_INTENSITY=LED_INTENSITY, WP=WRITE_PERIOD)
     else:
-        return render_template('login.html')
+        return redirect(url_for('home'))
 
 @app.route('/viewer/dashboard')
 def viewer_dashboard():
@@ -208,8 +275,10 @@ def viewer_dashboard():
     WRITE_PERIOD = config.getint('DEFAULT', 'WRITE_PERIOD')
     return render_template('viewer_dashboard.html', ID=ID, SP=SAMPLING_PERIOD, WAKE_AT=WAKE_AT, SLEEP_AT=SLEEP_AT, UP=UPLOAD_PERIOD, NFP=NEW_FILE_PERIOD, LED_INTENSITY=LED_INTENSITY, WP=WRITE_PERIOD)
 
-@app.route('/wifi/settings')
-def wifi_settings():
+    
+@app.route('/wifi_settings', methods=['GET'])
+def get_wifi():
+    print("get_wifi")
     if session.get('user_role') == 'admin':
         try:
             output = subprocess.check_output(['/usr/bin/wifisetup', 'list'], stderr=subprocess.STDOUT)
@@ -220,11 +289,11 @@ def wifi_settings():
             error_message = e.output
             networks = []  # Set networks to an empty list
 
-        return render_template('wifi_settings.html', networks=networks)
+        return jsonify({'networks': networks})
     else:   
-        return render_template('login.html')
+        return jsonify({'networks': []})
 
-@app.route('/add', methods=['POST'])
+@app.route('/add_wifi', methods=['POST'])
 def add_network():
     # print the form data from the POST request
     print(request.get_json())
@@ -250,7 +319,8 @@ def remove_network(ssid):
         print(output)
     except:
         pass
-    return redirect(url_for('wifi_settings'))
+    return jsonify({"status": "success"})
+    
 
 def update_config_file(config_data):
     config = configparser.ConfigParser()

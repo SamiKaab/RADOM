@@ -170,83 +170,15 @@ h1 {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Box shadow for a raised effect */
     z-index: 101; /* Ensure it's above the overlay */
     min-width: 50%;
-    min-height: 50%;
-}
-
-
-#settingsWindow{
-    display: flex;
-    min-height: 50vh
-}
-
-#configFormTopBar {
-    background-color: #528fa2; /* Light gray background color */
-    color: #000; /* Black text color */
-    display: flex; /* Use flexbox to fill the horizontal space */
-    justify-content: space-between; /* Push the elements to the edges */
-    align-items: center; /* Vertically center the elements */
-    padding: 10px;
-    border-radius: 10px 10px 0 0; /* Rounded corners for top */
-    border-bottom: 1px solid #000000;
-}
-
-#closeConfigFormBtn{
-    background-color: #00000000; /* Light gray background color */
-    color: #000000; /* Black text color */
-    border: none;
-    cursor: pointer;
-    font-size: 1.5em;
-    font-weight: bold;
-}
-#closeConfigFormBtn:hover{
-    color: #ffffff;
-}
-/* Style for the settings sidebar */
-
-#settingsSideBar {
-    background-color: #f5f5f5; /* Light gray background color */
-    color: #000; /* Black text color */
-    border-right: 1px solid #000000;
-    display: flex;
-    flex-direction: column; /* Stack buttons vertically */
-    align-items: stretch; /* Make buttons fill the horizontal space */
-    float: left;
-    border-radius: 0px 0px 0px 10px; /* Rounded corners for top */
-
-}
-
-/* Style for sidebar buttons */
-.sideBarButton {
-    display: flex;
-    flex-grow: 2;
     min-height: 10%;
-    max-height: 10%;
-    background-color: #f5f5f5;
-    color: #000;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.3s; /* Add a hover effect */
-    font-weight: bold;
-    font-size: 1.1em;
-    padding:10px;
+    padding:20px;
 }
 
-.sideBarButton:hover {
-    color: #528fa2;
-}
-.sideBarButton.active {
-    background-color: #528fa2;
-    color: #fff;
-}
 
-/* Style for the device settings */
-.settingsDiv {
-    flex: 3; /* Make it flexible to take more space than the sidebar */
-    padding-left: 20px; /* Adjust the padding as needed */
-    padding-right: 20px;
-    padding-bottom:20px;
-    float: left;
-}
+
+
+
+
 
 /* Style for form headings */
 h2 {
@@ -262,45 +194,21 @@ label {
 }
 
 /* Style for form input fields */
-input[type="text"],
-input[type="number"],
-input[type="time"],
-input[type="password"],
+
 input[type="range"] {
     width: 95%;
     padding: 8px;
     margin-bottom: 10px;
     border: 1px solid #ccc;
     border-radius: 5px;
-    /*border transition to 0.5s*/
-    transition: border 0.5s;
 }
 
-.form-group input[type="text"],
-.form-group input[type="number"],
-.form-group input[type="time"],
-.form-group input[type="password"],
+
 .form-group input[type="range"] {
     flex: 1;
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 5px;
-}
-.collapsible-content {
-    display: none;
-}
-
-.collapsible::after {
-    content: '⮞'; /* Unicode right-pointing triangle (▶) */
-    float: right;
-}
-
-.collapsible-content.open {
-    display: block;
-}
-
-.collapsible.open::after {
-    content: '⮟'; /* Unicode down-pointing triangle (▼) */
 }
 
 

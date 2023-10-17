@@ -4,14 +4,15 @@
     <meta charset="UTF-8">
     <title>BeUpStanding</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/view_dashboard_styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Include the new JavaScript file -->
 </head>
 <body>
     <header>
         <h1>
-            <button id="Home">Update test</button>
+            <button id="Home">BeUpStanding</button>
             <!--redirect to home page-->
             <script>
                 document.getElementById("Home").onclick = function () {
@@ -19,6 +20,20 @@
                 };
             </script>
         </h1>
+        <div class="button-container">   
+            <button id="home-button">
+                <i class="fas fa-home"></i>
+            </button>
+        </div>
+        <script>
+            document.getElementById("home-button").addEventListener("click", function() {
+                // Construct the URL based on the current hostname and redirect
+                const currentHostname = window.location.hostname;
+                const redirectURL = "/";
+
+                window.location.href = redirectURL;
+            });
+        </script>
     </header>
 
     <div class="container">
@@ -45,13 +60,13 @@
         </div>
         <script src="{{ url_for('static', filename='js/deviceInfo.js') }}"></script>
 
-        <div class="battery-container">
-            <div class="battery-level" id="battery-level" style="width: {{ battery_level }}%;"></div>
-            <div class="battery-text" id="battery-text">{{ battery_level }}%</div>
-        </div>
-        <script src="{{ url_for('static', filename='js/battery.js') }}"></script>
         
         <div class="device-actions">
+            <div class="battery-container">
+                <div class="battery-level" id="battery-level" style="width: {{ battery_level }}%;"></div>
+                <div class="battery-text" id="battery-text">{{ battery_level }}%</div>
+            </div>
+            <script src="{{ url_for('static', filename='js/battery.js') }}"></script>
     
             <button class="button" id="configureButton">Settings</button>
 
