@@ -1,6 +1,6 @@
 const normalUserButton = document.getElementById("normal-user-btn");
 normalUserButton.addEventListener("click", () => {
-    window.location.href = "/viewer/dashboard";
+    window.location.href = "/dashboard/guest";
 });
 
 // JavaScript to show the admin overlay when the "Admin" button is clicked
@@ -20,7 +20,7 @@ adminButton.addEventListener("click", () => {
     .then(data => {
         if (data.user_role === "admin") {
             // User is already logged in as admin, perform redirection
-            window.location.href = "/admin/dashboard";
+            window.location.href = "/dashboard/admin";
         }
         else {
             // User is not logged in as admin, show the overlay

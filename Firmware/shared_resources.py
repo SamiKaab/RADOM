@@ -14,7 +14,7 @@ DATA_DIR = "data"
 FILE_HEADER = ["Date time", "Distance(mm)", "Human Present"]
 CONFIG_FILE = "config.ini"
 LOG_FILE = "/root/Firmware/logs/standup.log"
-DEVICE_ID = 'A17E'
+DEVICE_ID ='A17E'
 
 def device_should_record(WAKE_AT, SLEEP_AT, rtc):
     current_time = rtc.read_datetime().time()

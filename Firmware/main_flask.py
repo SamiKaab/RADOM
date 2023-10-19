@@ -203,29 +203,14 @@ def change_password():
         except Exception as e:
             print(e)
             return jsonify({"status": "error", "message": str(e)})
-        #change the omega2 pro password
-        try:
-
-            new_line = f"option key '{new_password}'"
-            inside_iface_ap = False
-            file_path = "/etc/config/wireless"
-            # Iterate through the lines in the file and modify the 'option key' line
-            for line in fileinput.input(file_path, inplace=True):
-                # Check if we are inside the 'iface 'ap'' section
-                if line.strip().startswith("config wifi-iface 'ap'"):
-                    inside_iface_ap = True
-                elif inside_iface_ap and line.strip().startswith("option key '"):
-                    # Replace the current password with the new password
-                    line = f"        option key '{new_password}'\n"
-                    inside_iface_ap = False  # Reset the flag once we've made the change
-                print(line, end='')
-
-            print(f"Wi-Fi password for 'iface 'ap'' updated to: {new_password}")
-            # Restart the Wi-Fi interface: /etc/init.d/network restart
-            subprocess.run(['/etc/init.d/network', 'restart'])
-        except Exception as e:
-            print(e)
-            return jsonify({"status": "error", "message": str(e)})
+        # #change the omega2 pro password
+        # try:
+        #     line = f"uci set wireless.ap.key='{new_password}' && uci commit wireless && /etc/init.d/network restart"
+        #     print(f"Wi-Fi password for 'iface 'ap'' updated to: {new_password}")
+        #     subprocess.run(line, shell=True)
+        # except Exception as e:
+        #     print(e)
+        #     return jsonify({"status": "error", "message": str(e)})
 
         return jsonify({"status": "success"})
     else:
@@ -240,7 +225,7 @@ def get_session():
     else:
         return jsonify({'user_role': None})
 
-@app.route('/admin/dashboard')
+@app.route('/dashboard/admin')
 def admin_dashboard():
     # Check if the user is authenticated as an admin
     print(f"{session.get('user_role')}")
@@ -261,8 +246,8 @@ def admin_dashboard():
     else:
         return redirect(url_for('home'))
 
-@app.route('/viewer/dashboard')
-def viewer_dashboard():
+@app.route('/dashboard/guest')
+def guest_dashboard():
     config = configparser.ConfigParser()
     config.read(CONFIG_FILE)
     ID = config.get('DEFAULT', 'ID')
@@ -273,7 +258,7 @@ def viewer_dashboard():
     NEW_FILE_PERIOD = config.getint('DEFAULT', 'NEW_FILE_PERIOD')
     LED_INTENSITY = config.getint('DEFAULT', 'LED_INTENSITY') 
     WRITE_PERIOD = config.getint('DEFAULT', 'WRITE_PERIOD')
-    return render_template('viewer_dashboard.html', ID=ID, SP=SAMPLING_PERIOD, WAKE_AT=WAKE_AT, SLEEP_AT=SLEEP_AT, UP=UPLOAD_PERIOD, NFP=NEW_FILE_PERIOD, LED_INTENSITY=LED_INTENSITY, WP=WRITE_PERIOD)
+    return render_template('guest_dashboard.html', ID=ID, SP=SAMPLING_PERIOD, WAKE_AT=WAKE_AT, SLEEP_AT=SLEEP_AT, UP=UPLOAD_PERIOD, NFP=NEW_FILE_PERIOD, LED_INTENSITY=LED_INTENSITY, WP=WRITE_PERIOD)
 
     
 @app.route('/wifi_settings', methods=['GET'])
@@ -299,16 +284,16 @@ def add_network():
     print(request.get_json())
     # /usr/bin/wifisetup add -ssid <ssid> -encr <encryption type> -password <password>
     try:
-        print(f"command: /usr/bin/wifisetup add -ssid {request.get_json()['ssid']} -encr {request.get_json()['encryption']} -password {request.get_json()['password']}")
-        output  = subprocess.check_output(['/usr/bin/wifisetup', 'add', '-ssid', request.get_json()['ssid'], '-encr', request.get_json()['encryption'], '-password', request.get_json()['password']], stderr=subprocess.STDOUT)
+        print(f"command: /usr/bin/wifisetup add -ssid {request.get_json()['ssid']} -encr {request.get_json()['encryption']} -password {request.get_json()['wifiPassword']}")
+        output  = subprocess.check_output(['/usr/bin/wifisetup', 'add', '-ssid', str(request.get_json()['ssid']), '-encr', str(request.get_json()['encryption']), '-password', str(request.get_json()['wifiPassword'])], stderr=subprocess.STDOUT)
         output = output.decode('utf-8')
         print(output)
         if "ERROR" in output:
             return jsonify({"status": "error", "message": output})
         else:
             return jsonify({"status": "success"})
-    except:
-        return jsonify({"status": "error"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
 
 @app.route('/remove/<ssid>', methods=['POST'])
 def remove_network(ssid):
@@ -366,6 +351,11 @@ def save_config():
         config_data = check_config_values(config_data)
         print(config_data)
         update_config_file(config_data)
+        # apply the changes
+        if not stop_event.is_set():
+            stop_event.set()
+            time.sleep(5)
+            stop_event.clear()
         
         return jsonify({"message": "Data received successfully"})
     except Exception as e:

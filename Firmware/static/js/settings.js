@@ -11,10 +11,14 @@ document.getElementById('settings-button').addEventListener('click', function() 
     }
     if (wifiSettings) {
         wifiSettings.style.display = 'none';
+        document.getElementById('WifiSettingsBtn').classList.remove('active');
+
 
     }
     if (passwordSettings) {
         passwordSettings.style.display = 'none';
+        document.getElementById('PasswordSettingsBtn').classList.remove('active');
+
     }
     if (deviceSettings) {
         deviceSettings.style.display = 'block';
@@ -140,18 +144,18 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // handle the cancel button click event
-document.getElementById('cancelButton').addEventListener('click', function() {
-    console.log('cancelButton clicked');
-    event.preventDefault(); // Prevent the default button click behavior
-    event.stopPropagation(); // Stop event propagation
-    var overlay = document.getElementById('overlay');
-    var configFormContainer = document.getElementById('configFormContainer');
+// document.getElementById('cancelButton').addEventListener('click', function() {
+//     console.log('cancelButton clicked');
+//     event.preventDefault(); // Prevent the default button click behavior
+//     event.stopPropagation(); // Stop event propagation
+//     var overlay = document.getElementById('overlay');
+//     var configFormContainer = document.getElementById('configFormContainer');
     
-    if (overlay && configFormContainer) {
-        overlay.style.display = 'none';
-        configFormContainer.style.display = 'none';
-    }
-});
+//     if (overlay && configFormContainer) {
+//         overlay.style.display = 'none';
+//         configFormContainer.style.display = 'none';
+//     }
+// });
 
 
 
@@ -309,7 +313,13 @@ document.getElementById("chgPswdBtn").onclick = function () {
         alert("New password and confirm password do not match");
         error = true;
     }
-    
+    //check that the password is at least 8 characters long and only contains letters and numbers
+    if (newPassword.length < 8 || !newPassword.match(/^[0-9a-zA-Z]+$/)) {
+        highlightPasswordField("newPassword");
+        highlightPasswordField("confirmPassword");
+        alert("Password must be at least 8 characters long and only contain letters and numbers");
+        error = true;
+    }
     if (error) {
         return;
     }
