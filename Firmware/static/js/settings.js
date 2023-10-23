@@ -1,4 +1,7 @@
-document.getElementById('settings-button').addEventListener('click', function() {
+// opening the settings menu
+document.getElementById('settings-button').addEventListener('click', openSettings);
+
+function openSettings(){
     var overlay = document.getElementById('overlay');
     var configFormContainer = document.getElementById('configFormContainer');
     var wifiSettings = document.getElementById('wifiSettings');
@@ -25,13 +28,13 @@ document.getElementById('settings-button').addEventListener('click', function() 
         //change DeviceSettingsBtn to active
         document.getElementById('DeviceSettingsBtn').classList.add('active');
     }
-});
+}
 
+// sidebar menu buttons
+document.getElementById('WifiSettingsBtn').addEventListener('click', openWifiSettings);
 
-
-document.getElementById('WifiSettingsBtn').addEventListener('click', function() {
-    event.preventDefault(); // Prevent the default button click behavior
-    event.stopPropagation(); // Stop event propagation
+function openWifiSettings(){
+ 
     var wifiSettings = document.getElementById('wifiSettings');
     var deviceSettings = document.getElementById('deviceSettings');
     var passwordSettings = document.getElementById('passwordSettings');
@@ -65,7 +68,7 @@ document.getElementById('WifiSettingsBtn').addEventListener('click', function() 
         passwordSettings.style.display = 'none';
         document.getElementById('PasswordSettingsBtn').classList.remove('active');
     }
-});
+}
 
 document.getElementById('DeviceSettingsBtn').addEventListener('click', function() {
     event.preventDefault(); // Prevent the default button click behavior
@@ -107,6 +110,7 @@ document.getElementById('PasswordSettingsBtn').addEventListener('click', functio
         document.getElementById('PasswordSettingsBtn').classList.add('active');
     }
 });
+
 function confirmAndRemove(ssid) {
     event.preventDefault();
     event.stopPropagation();
@@ -119,8 +123,7 @@ function confirmAndRemove(ssid) {
         .then(response => response.json())
         .then(data => {
             if (data.status === "success") {
-                alert(`Network "${ssid}" has been removed.`);
-                location.reload();
+                openWifiSettings();
             } else {
                 alert(`Failed to remove network "${ssid}": ${data.message}`);
             }
@@ -130,7 +133,6 @@ function confirmAndRemove(ssid) {
         });
     }
 }
-
 
 document.addEventListener("DOMContentLoaded", function () {
     const advancedSettingsToggle = document.getElementById("advancedSettingsToggle");
@@ -142,22 +144,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     });
 });
-
-// handle the cancel button click event
-// document.getElementById('cancelButton').addEventListener('click', function() {
-//     console.log('cancelButton clicked');
-//     event.preventDefault(); // Prevent the default button click behavior
-//     event.stopPropagation(); // Stop event propagation
-//     var overlay = document.getElementById('overlay');
-//     var configFormContainer = document.getElementById('configFormContainer');
-    
-//     if (overlay && configFormContainer) {
-//         overlay.style.display = 'none';
-//         configFormContainer.style.display = 'none';
-//     }
-// });
-
-
 
 document.getElementById('saveButton').addEventListener('click', function() {
     event.preventDefault(); // Prevent the default button click behavior
@@ -202,7 +188,9 @@ document.getElementById('saveButton').addEventListener('click', function() {
         id: document.getElementById('id').value,
         wake_at: document.getElementById('wake_at').value,
         sleep_at: document.getElementById('sleep_at').value,
-        led_intensity: document.getElementById('led_intensity').value
+        led_intensity: document.getElementById('led_intensity').value,
+        //convert to strinng "true" or "false"
+        online_config: document.getElementById('online_config').checked ? "true" : "false"
     };
     
     // Generate JSON data from the form data
@@ -246,20 +234,22 @@ function highlightPasswordField(id) {
         }
     }, 200);
 }
+
 document.getElementById("addWifiBtn").onclick = function () {
     event.preventDefault();
     event.stopPropagation();
     var error = false;
-    //check if wifiPassword is empty
-    if (document.getElementById("wifiPassword").value == "") {
-        error = true;
-        highlightPasswordField("wifiPassword");
-    }
+    var password = document.getElementById("wifiPassword").value;
 
     //check if ssid is empty
     if (document.getElementById("ssid").value == "") {
         error = true;
         highlightPasswordField("ssid");
+    }
+    if (password.length < 8 || !password.match(/^[0-9a-zA-Z]+$/)) {
+        highlightPasswordField("wifiPassword");
+        alert("Password must be at least 8 characters long and only contain letters and numbers");
+        error = true;
     }
     if (error) {
         return;
@@ -280,8 +270,13 @@ document.getElementById("addWifiBtn").onclick = function () {
     .then(response => response.json())
     .then(data => {
         if (data.status == "success") {
-            alert("Network added successfully");
-            location.reload();
+            // Clear the form
+            document.getElementById("ssid").value = "";
+            document.getElementById("encryption").value = "";
+            document.getElementById("wifiPassword").value = "";
+            openWifiSettings();
+
+
         } else {
             alert("Error adding network: " + data.message);
         }
@@ -290,7 +285,6 @@ document.getElementById("addWifiBtn").onclick = function () {
         console.error('Error:', error);
     });
 };
-
 
 document.getElementById("chgPswdBtn").onclick = function () {
     event.preventDefault();
@@ -347,4 +341,44 @@ document.getElementById("chgPswdBtn").onclick = function () {
     .catch((error) => {
         console.error('Error:', error);
     });
+}
+
+document.getElementById("applyWifiChangesBtn").addEventListener('click', applyWifiChanges);
+function applyWifiChanges(){
+    event.preventDefault();
+    event.stopPropagation();
+    document.getElementById("configFormContainer").style.display = "none";
+    document.getElementById("overlay").style.display = "flex";
+    // display a loading spinner
+    const loader = document.getElementById("loadingDiv");
+
+    // Function to show the loader
+    function showLoader() {
+        loader.style.display = "block";
+    }
+
+    // Function to hide the loader
+    function hideLoader() {
+        loader.style.display = "none";
+    }
+
+
+    showLoader();
+    fetch('/wifi/apply_changes', {
+        method: 'POST',
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoader();
+        if (data.status == "success") {
+            location.reload();
+        } else {
+            alert("Error applying wifi settings: " + data.message);
+        }
+    })
+    .catch((error) => {
+        hideLoader();
+        console.error('Error:', error);
+    });
+
 }

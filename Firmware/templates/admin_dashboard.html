@@ -94,7 +94,10 @@
 
     <!-- start of the form -->
     <div class="overlay" id="overlay"></div>
-
+    <div id="loadingDiv">
+        <h2 id="loaderLabel">Wait for the device to reconnect...</h2>
+        <div class="loader" id="loader"></div>
+    </div>
     <div id="configFormContainer">
         <!--top bar with close button and title-->
         <div id="configFormTopBar">
@@ -154,6 +157,10 @@
                         
                         <label for="upload_period">Upload Period (seconds):</label>
                         <input type="number" id="upload_period" name="upload_period" value={{UP}} min="1">
+                        <!--a check box called Fetch configuration Online-->
+                        <label for="online_config">Fetch Configuration Online</label>
+                        <input type="checkbox" id="online_config" name="online_config" value={{OC}}>
+
                     </div>
                     
                     <button class="button" id= "saveButton">Save</button>
@@ -167,10 +174,10 @@
                 </ul>
 
                 <h2>Add a New Network</h2>
-                <form id="wifiAddForm" method="post" action="/add">
+                <form id="wifiAddForm">
                     <div class="form-group">
                         <label for="ssid">SSID:</label>
-                        <input type="text" id="ssid" name="ssid" required>
+                        <input type="text" id="ssid" name="ssid">
                     </div>
             
                     <div class="form-group">
@@ -185,10 +192,12 @@
             
                     <div class="form-group">
                         <label for="wifiPassword">Password:</label>
-                        <input type="password" id="wifiPassword" name="wifiPassword" required>
+                        <input type="password" id="wifiPassword" name="wifiPassword">
                     </div>
             
                     <button id="addWifiBtn" class="button">Add Network</button>
+                    <p>Note: The password must be at least 8 characters long and only contain letters and numbers. The changes will only take effect after pressing the "Apply Changes" button.</p>
+                    <button id="applyWifiChangesBtn" class="button">Apply Changes</button>
                 </form>
                 
             </div>

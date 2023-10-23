@@ -65,12 +65,46 @@ def internet_check_loop(led_status_queue):
     print("Internet check thread stopped")
 
 
+def add_wifi_config(ssid, encryption, key):
+    wifi_config = (
+        'config wifi-config\n'
+        f'\toption key \'{key}\'\n'
+        f'\toption ssid \'{ssid}\'\n'
+        f'\toption encryption \'{encryption}\'\n'
+        '\n'
+    )
+
+    with open('/etc/config/wireless', 'a') as f:
+        f.write(wifi_config)
+
+    return True
+
+    
+def delete_wifi_config(ssid):
+    with open('/etc/config/wireless', 'r') as f:
+        lines = f.readlines()
+
+    # Find and remove the wifi-config section
+    new_lines = []
+    lineIndex = 0
+    while lineIndex < len(lines):
+        if lines[lineIndex].startswith('config wifi-config') and ssid in lines[lineIndex + 2]:
+            lineIndex += 4
+        if lineIndex < len(lines):
+            new_lines.append(lines[lineIndex])
+            lineIndex += 1
+
+    # Write the modified content back to the file
+    with open('/etc/config/wireless', 'w') as f:
+        f.writelines(new_lines)
+
 def cleanup_expired_sessions(session_dir):
     now = datetime.datetime.now()
     for session_file in glob.glob(os.path.join(session_dir, '*')):
         file_timestamp = datetime.datetime.fromtimestamp(os.path.getmtime(session_file))
         if now - file_timestamp > app.config['PERMANENT_SESSION_LIFETIME']:
             os.remove(session_file)
+
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -240,9 +274,9 @@ def admin_dashboard():
         NEW_FILE_PERIOD = config.getint('DEFAULT', 'NEW_FILE_PERIOD')
         LED_INTENSITY = config.getint('DEFAULT', 'LED_INTENSITY') 
         WRITE_PERIOD = config.getint('DEFAULT', 'WRITE_PERIOD')
+        ONLINE_CONFIG = config.getboolean('DEFAULT', 'ONLINE_CONFIG')
 
-
-        return render_template('admin_dashboard.html', ID=ID, SP=SAMPLING_PERIOD, WAKE_AT=WAKE_AT, SLEEP_AT=SLEEP_AT, UP=UPLOAD_PERIOD, NFP=NEW_FILE_PERIOD, LED_INTENSITY=LED_INTENSITY, WP=WRITE_PERIOD)
+        return render_template('admin_dashboard.html', ID=ID, SP=SAMPLING_PERIOD, WAKE_AT=WAKE_AT, SLEEP_AT=SLEEP_AT, UP=UPLOAD_PERIOD, NFP=NEW_FILE_PERIOD, LED_INTENSITY=LED_INTENSITY, WP=WRITE_PERIOD, OC=ONLINE_CONFIG)
     else:
         return redirect(url_for('home'))
 
@@ -258,7 +292,8 @@ def guest_dashboard():
     NEW_FILE_PERIOD = config.getint('DEFAULT', 'NEW_FILE_PERIOD')
     LED_INTENSITY = config.getint('DEFAULT', 'LED_INTENSITY') 
     WRITE_PERIOD = config.getint('DEFAULT', 'WRITE_PERIOD')
-    return render_template('guest_dashboard.html', ID=ID, SP=SAMPLING_PERIOD, WAKE_AT=WAKE_AT, SLEEP_AT=SLEEP_AT, UP=UPLOAD_PERIOD, NFP=NEW_FILE_PERIOD, LED_INTENSITY=LED_INTENSITY, WP=WRITE_PERIOD)
+    ONLINE_CONFIG = config.getboolean('DEFAULT', 'ONLINE_CONFIG')
+    return render_template('guest_dashboard.html', ID=ID, SP=SAMPLING_PERIOD, WAKE_AT=WAKE_AT, SLEEP_AT=SLEEP_AT, UP=UPLOAD_PERIOD, NFP=NEW_FILE_PERIOD, LED_INTENSITY=LED_INTENSITY, WP=WRITE_PERIOD, OC=ONLINE_CONFIG)
 
     
 @app.route('/wifi_settings', methods=['GET'])
@@ -284,14 +319,12 @@ def add_network():
     print(request.get_json())
     # /usr/bin/wifisetup add -ssid <ssid> -encr <encryption type> -password <password>
     try:
-        print(f"command: /usr/bin/wifisetup add -ssid {request.get_json()['ssid']} -encr {request.get_json()['encryption']} -password {request.get_json()['wifiPassword']}")
-        output  = subprocess.check_output(['/usr/bin/wifisetup', 'add', '-ssid', str(request.get_json()['ssid']), '-encr', str(request.get_json()['encryption']), '-password', str(request.get_json()['wifiPassword'])], stderr=subprocess.STDOUT)
-        output = output.decode('utf-8')
-        print(output)
-        if "ERROR" in output:
-            return jsonify({"status": "error", "message": output})
-        else:
-            return jsonify({"status": "success"})
+        # print(f"command: /usr/bin/wifisetup add -ssid {request.get_json()['ssid']} -encr {request.get_json()['encryption']} -password {request.get_json()['wifiPassword']}")
+        # output  = subprocess.check_output(['/usr/bin/wifisetup', 'add', '-ssid', str(request.get_json()['ssid']), '-encr', str(request.get_json()['encryption']), '-password', str(request.get_json()['wifiPassword'])], stderr=subprocess.STDOUT)
+        # output = output.decode('utf-8')
+        # print(output)
+        add_wifi_config(request.get_json()['ssid'], request.get_json()['encryption'], request.get_json()['wifiPassword'])
+        return jsonify({"status": "success"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
@@ -299,13 +332,26 @@ def add_network():
 def remove_network(ssid):
     print(ssid)
     try:
-        output = subprocess.check_output(['/usr/bin/wifisetup', 'remove', '-ssid' , ssid], stderr=subprocess.STDOUT)
-        output = output.decode('utf-8')
-        print(output)
+        # output = subprocess.check_output(['/usr/bin/wifisetup', 'remove', '-ssid' , ssid], stderr=subprocess.STDOUT)
+        # output = output.decode('utf-8')
+        # print(output)
+        delete_wifi_config(ssid)
     except:
         pass
     return jsonify({"status": "success"})
     
+@app.route('/wifi/apply_changes', methods=['POST'])
+def apply_wifi_changes():
+    # run command /usr/bin/wifisetup restart
+    print("apply wifi changes")
+    try:
+        output = subprocess.check_output(['/etc/init.d/network', 'restart'], stderr=subprocess.STDOUT)
+        output = output.decode('utf-8')
+        print(output)
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
 
 def update_config_file(config_data):
     config = configparser.ConfigParser()
