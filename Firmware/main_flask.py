@@ -172,10 +172,20 @@ def button_click():
 
     if action == 'start':
         print("start")
+        config = configparser.ConfigParser()
+        config.read(CONFIG_FILE)
+        config.set('DEFAULT', 'STOPPED', 'false')
+        with open(CONFIG_FILE, 'w') as configfile:
+                    config.write(configfile)
         stop_event.clear()
     elif action == 'stop':
         print("stop")
+        config = configparser.ConfigParser()
+        config.read(CONFIG_FILE)
+        config.set('DEFAULT', 'STOPPED', 'true')
         stop_event.set()
+        with open(CONFIG_FILE, 'w') as configfile:
+                    config.write(configfile)
 
     return jsonify({'message': f'Button pressed for action: {action}'})
 
@@ -390,6 +400,7 @@ def check_config_values(config_data):
 # Receive the form data as JSON and print it
 @app.route('/save_config', methods=['POST'])
 def save_config():
+    message = ""
     try:
         config_data = request.get_json()
         print("Received JSON data:")
@@ -397,25 +408,44 @@ def save_config():
         config_data = check_config_values(config_data)
         print(config_data)
         update_config_file(config_data)
+        if config_data['make_global'] == "true":
+            # check if the internet is available
+            if google_drive.is_internet_available():
+                backup_config_file()
+            else:
+                message = "Internet is not available. Please connect to the internet and try again."
         # apply the changes
         if not stop_event.is_set():
             stop_event.set()
             time.sleep(5)
             stop_event.clear()
         
-        return jsonify({"message": "Data received successfully"})
+        return jsonify({"status": "success", "alert": message})
     except Exception as e:
         print(e)
         return jsonify({"error": str(e)}), 400
 
 
+def backup_config_file():
+    try:
+        google_drive.delete_file(service = None, file_name = CONFIG_FILE)
+        # check if the internet is available
+        if google_drive.is_internet_available():
+            print("uploading config file to the internet")
+            # upload the config file to the internet
+            google_drive.upload_file(service=None, file_path=CONFIG_FILE, parent_folder_id="root")
+    except Exception as e:
+        print(e)
+
 
 if __name__ == "__main__":
     try:
+        
         # Create an empty queue
         led_status_queue = deque()
         led_status_queue.append(("settingUp", True))
-
+        
+        
         led_thread = threading.Thread(target=pulsate_led, args=(led_status_queue, status_queue,))  # red led loop
         led_thread.start()
         rtc = RTC.SDL_DS3231()
@@ -430,6 +460,12 @@ if __name__ == "__main__":
         upload_thread.start()
         internet_check_thread.start()
 
+        config = configparser.ConfigParser()
+        config.read(CONFIG_FILE)
+        if config.get('DEFAULT', 'STOPPED') == 'true':
+            stop_event.set()
+        else:
+            stop_event.clear()
         # Use Waitress to serve the Flask app
         serve(app, host='0.0.0.0', port=5000)
 

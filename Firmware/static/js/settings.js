@@ -189,8 +189,8 @@ document.getElementById('saveButton').addEventListener('click', function() {
         wake_at: document.getElementById('wake_at').value,
         sleep_at: document.getElementById('sleep_at').value,
         led_intensity: document.getElementById('led_intensity').value,
-        //convert to strinng "true" or "false"
-        online_config: document.getElementById('online_config').checked ? "true" : "false"
+        online_config: document.getElementById('online_config').checked ? "true" : "false",
+        make_global: document.getElementById('make_global').checked ? "true" : "false"
     };
     
     // Generate JSON data from the form data
@@ -203,7 +203,15 @@ document.getElementById('saveButton').addEventListener('click', function() {
             'Content-Type': 'application/json',
         },
         body: jsonData,
-    });
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === "success") {
+            alert(`Configuration saved successfully\n ${data.alert}`);
+        } else {
+            alert(`Failed to save configuration: ${data.error}`);
+        }
+    })
 
     // Hide the overlay and form container after submission
     var overlay = document.getElementById('overlay');

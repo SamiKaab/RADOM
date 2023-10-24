@@ -157,10 +157,16 @@
                         
                         <label for="upload_period">Upload Period (seconds):</label>
                         <input type="number" id="upload_period" name="upload_period" value={{UP}} min="1">
-                        <!--a check box called Fetch configuration Online-->
-                        <label for="online_config">Fetch Configuration Online</label>
-                        <input type="checkbox" id="online_config" name="online_config" value={{OC}}>
-
+                        <div class="form-group">
+                            <label for="online_config">Sync Online</label>
+                            <input type="checkbox" id="online_config" name="online_config" value={{OC}}>
+                        </div>
+                        <p>When set the settings will be fetched from the online server.</p>
+                        <div class="form-group">
+                            <label for="make_global">Global Config</label>
+                            <input type="checkbox" id="make_global" name="make_global" value="false">
+                        </div>
+                        <p>Make this configuration global for all devices. Any device that is set to fetch the settings online will use these settings.</p>
                     </div>
                     
                     <button class="button" id= "saveButton">Save</button>

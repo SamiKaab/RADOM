@@ -35,7 +35,7 @@ def get_credentials():
     # Check if a token file exists and load the credentials from it if it does
     creds = None
     creds = service_account.Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
-
+    
     return creds
 
 def is_internet_available():
@@ -127,6 +127,9 @@ def create_folder(service, name, parent_folder_id=None):
     return folder['id']
 
 def upload_file(service, file_path, parent_folder_id):
+    if service is None:
+        creds = get_credentials()
+        service = build("drive", "v3", credentials=creds)
     # check if file exists and return id if it does
     query = f"name='{os.path.basename(file_path)}' and '{parent_folder_id}' in parents"
     response = service.files().list(q=query, spaces='drive', fields='files(id)').execute()
@@ -141,6 +144,7 @@ def upload_file(service, file_path, parent_folder_id):
     media = MediaFileUpload(file_path, mimetype='application/octet-stream')
     file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
     logging.info(f"Backed up file: {file_path}")
+    print(f"Backed up file: {file_path}")
     return file['id']
 
 
@@ -205,7 +209,36 @@ def check_if_already_exist(file_path, service, parent_folder_id):
 
     return False
 
-     
+def delete_file(service, file_name):
+    if service is None:
+        creds = get_credentials()
+        service = build("drive", "v3", credentials=creds)
+    # check if file exists and return id if it does
+    query = f"name='{file_name}'"
+    response = service.files().list(q=query, spaces='drive', fields='files(id)').execute()
+    if len(response['files']) > 0:
+        file_id = response['files'][0]['id']
+        service.files().delete(fileId=file_id).execute()
+        print(f"Deleted file: {file_name} (id: {file_id})")
+        return True
+    return False
+
+def download_file(service, file_name, destination):
+    if service is None:
+        creds = get_credentials()
+        service = build("drive", "v3", credentials=creds)
+    # check if file exists and return id if it does
+    query = f"name='{file_name}'"
+    response = service.files().list(q=query, spaces='drive', fields='files(id)').execute()
+    if len(response['files']) > 0:
+        file_id = response['files'][0]['id']
+        request = service.files().get_media(fileId=file_id)
+        file_content = request.execute()
+        file_path = os.path.join(destination, file_name)
+        with open(file_path, "wb") as f:
+            f.write(file_content)
+        print(f"Downloaded file: {file_name} (id: {file_id})")
+        return True
 
 if __name__ == "__main__":
 #     # setup_logging()

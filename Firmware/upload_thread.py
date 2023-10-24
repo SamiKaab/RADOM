@@ -4,8 +4,8 @@ import os
 import time
 import configparser
 import backup_to_drive as google_drive
-from shared_resources import FILE_HEADER, ROOT_DIR, DATA_DIR, CONFIG_FILE,stop_event, lock, device_should_record,LOG_FILE,DEVICE_ID
-
+from shared_resources import FILE_HEADER, ROOT_DIR, DATA_DIR, TEMP_DIR, CONFIG_FILE,stop_event, lock, device_should_record,LOG_FILE,DEVICE_ID
+import subprocess
 import logging
 
 def get_time_from_internet():
@@ -54,12 +54,31 @@ def upload_loop(rtc, status_queue):
         WAKE_AT = config.get('DEFAULT', 'WAKE_AT')
         SLEEP_AT = config.get('DEFAULT', 'SLEEP_AT')
         ID = config.get('DEFAULT', 'ID')
+        ONLINE_CONFIG = config.get('DEFAULT', 'ONLINE_CONFIG')
     
 
     # Update RTC with the current time if internet connection is available
     if google_drive.is_internet_available():
         dt = get_time_from_internet()
         rtc.write_datetime(dt)
+        print(ONLINE_CONFIG)
+        if ONLINE_CONFIG == "true": # if online config is true, download config from google drive
+            print("downloading config")
+            google_drive.download_file(service = None, file_name = CONFIG_FILE, destination = TEMP_DIR)
+            
+            new_config = configparser.ConfigParser()
+            new_config.read(os.path.join(TEMP_DIR, CONFIG_FILE))
+            # change password
+            password = new_config.get('DEFAULT', 'PASSWORD')
+            line  = f"echo -e \"{password}\\n{password}\" | passwd"
+            subprocess.run(line, shell=True)
+            excluded_keys = ['STOPPED', 'LED_INTENSITY']
+            for key in excluded_keys:
+                value = config.get('DEFAULT', key)
+                new_config.set('DEFAULT', key, value)
+            with open(CONFIG_FILE, 'w') as f:
+                new_config.write(f)
+    
     # else:
         # If internet connection is not available, turn on the red LED to indicate an error
         #print("no internet")
@@ -79,6 +98,24 @@ def upload_loop(rtc, status_queue):
             WAKE_AT = config.get('DEFAULT', 'WAKE_AT')
             SLEEP_AT = config.get('DEFAULT', 'SLEEP_AT')
             ID = config.get('DEFAULT', 'ID')
+            ONLINE_CONFIG = config.get('DEFAULT', 'ONLINE_CONFIG')
+            print(ONLINE_CONFIG)
+            if ONLINE_CONFIG == "true": # if online config is true, download config from google drive
+                print("downloading config")
+                google_drive.download_file(service = None, file_name = CONFIG_FILE, destination = TEMP_DIR)
+                
+                new_config = configparser.ConfigParser()
+                new_config.read(os.path.join(TEMP_DIR, CONFIG_FILE))
+                # change password
+                password = new_config.get('DEFAULT', 'PASSWORD')
+                line  = f"echo -e \"{password}\\n{password}\" | passwd"
+                subprocess.run(line, shell=True)
+                excluded_keys = ['STOPPED', 'LED_INTENSITY']
+                for key in excluded_keys:
+                    value = config.get('DEFAULT', key)
+                    new_config.set('DEFAULT', key, value)
+                with open(CONFIG_FILE, 'w') as f:
+                    new_config.write(f)
             
         if (rtc.read_datetime() - last_upload_try).total_seconds() > UPLOAD_PERIOD:
             last_upload_try = rtc.read_datetime()

@@ -10,6 +10,7 @@ settingUp = True
 # Create a flag to indicate if the threads should continue stop_event
 stop_event = threading.Event()
 ROOT_DIR = "/root/Firmware"
+TEMP_DIR = "temp"
 DATA_DIR = "data"
 FILE_HEADER = ["Date time", "Distance(mm)", "Human Present"]
 CONFIG_FILE = "config.ini"

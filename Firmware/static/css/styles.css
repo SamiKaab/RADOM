@@ -207,6 +207,7 @@ h1 {
     z-index: 101; /* Ensure it's above the overlay */
     min-width: 50%;
     min-height: 50%;
+    max-height: 60%;
 }
 
 
@@ -282,6 +283,8 @@ h1 {
     padding-right: 20px;
     padding-bottom:20px;
     float: left;
+    max-height: 60%; /* You can adjust the height as needed */
+    overflow-y: scroll; /* Add scrollbars */
 }
 
 /* Style for form headings */
