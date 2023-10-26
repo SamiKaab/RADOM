@@ -197,6 +197,24 @@ document.getElementById('saveButton').addEventListener('click', function() {
     var jsonData = JSON.stringify(formData, null, 2);
     console.log(jsonData);  
     // send data to /save_config' endpoint using a POST request
+
+    document.getElementById("configFormContainer").style.display = "none";
+    document.getElementById("overlay").style.display = "flex";
+    // display a loading spinner
+    const loader = document.getElementById("loadingDiv");
+
+    // Function to show the loader
+    function showLoader() {
+        loader.style.display = "block";
+    }
+
+    // Function to hide the loader
+    function hideLoader() {
+        loader.style.display = "none";
+    }
+
+
+    showLoader();
     fetch('/save_config', {
         method: 'POST',
         headers: {
@@ -206,6 +224,9 @@ document.getElementById('saveButton').addEventListener('click', function() {
     })
     .then(response => response.json())
     .then(data => {
+        hideLoader();
+        var overlay = document.getElementById('overlay');
+        overlay.style.display = 'none';
         if (data.status === "success") {
             alert(`Configuration saved successfully\n ${data.alert}`);
         } else {
@@ -214,11 +235,9 @@ document.getElementById('saveButton').addEventListener('click', function() {
     })
 
     // Hide the overlay and form container after submission
-    var overlay = document.getElementById('overlay');
     var configFormContainer = document.getElementById('configFormContainer');
     
     if (overlay && configFormContainer) {
-        overlay.style.display = 'none';
         configFormContainer.style.display = 'none';
     }
 });

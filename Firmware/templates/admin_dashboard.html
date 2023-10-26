@@ -20,14 +20,14 @@
             </script>
         </h1>
         <div class="button-container">
-            <button id="console-button">
+            <button class="header-button"  id="console-button">
                 <i class="fas fa-terminal"></i>
             </button>
             
-            <button id="settings-button">
+            <button class="header-button"  id="settings-button">
                 <i class="fas fa-cog"></i>
             </button>
-            <button id="home-button">
+            <button class="header-button"  id="home-button">
                 <i class="fas fa-home"></i>
             </button>
         </div>
@@ -47,6 +47,7 @@
 
                 window.location.href = redirectURL;
             });
+          
         </script>
     </header>
 
@@ -95,7 +96,7 @@
     <!-- start of the form -->
     <div class="overlay" id="overlay"></div>
     <div id="loadingDiv">
-        <h2 id="loaderLabel">Wait for the device to reconnect...</h2>
+        <h2 id="loaderLabel">Please Wait...</h2>
         <div class="loader" id="loader"></div>
     </div>
     <div id="configFormContainer">
@@ -158,15 +159,15 @@
                         <label for="upload_period">Upload Period (seconds):</label>
                         <input type="number" id="upload_period" name="upload_period" value={{UP}} min="1">
                         <div class="form-group">
-                            <label for="online_config">Sync Online</label>
+                            <label for="online_config">Use Glogal Settings</label>
                             <input type="checkbox" id="online_config" name="online_config" value={{OC}}>
                         </div>
-                        <p>When set the settings will be fetched from the online server.</p>
+                        <p>If set the settings above will be ignored and will instead be fetched from the cloud.</p>
                         <div class="form-group">
-                            <label for="make_global">Global Config</label>
+                            <label for="make_global">Make Settings Global</label>
                             <input type="checkbox" id="make_global" name="make_global" value="false">
                         </div>
-                        <p>Make this configuration global for all devices. Any device that is set to fetch the settings online will use these settings.</p>
+                        <p>Make these settings global for all devices. Any device that has "Use Glogal Settings" set will use these settings.</p>
                     </div>
                     
                     <button class="button" id= "saveButton">Save</button>

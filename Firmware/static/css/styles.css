@@ -39,12 +39,12 @@ h1 {
     gap: 1%; /* No space in between buttons */
 }
 
-#home-button, #settings-button, #console-button {
+#home-button, #settings-button, #console-button, #reboot-button{
     background: transparent;
     border: none;
     font-size:150%;
 }
-#home-button:hover, #settings-button:hover, #console-button:hover {
+#home-button:hover, #settings-button:hover, #console-button:hover, #reboot-button:hover {
     color: #065504;
 }
 .button-container i {

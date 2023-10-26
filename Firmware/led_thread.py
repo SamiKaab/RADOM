@@ -57,6 +57,7 @@ def pulsate_led(led_status_queue, status_queue):
         elif stop_event.is_set():
             stop = True
             # red
+            frequency = 0.5
             colors = [red]
             if global_var_dict["connected"]:
                 colors.append(blue)

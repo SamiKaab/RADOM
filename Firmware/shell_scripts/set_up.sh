@@ -27,17 +27,17 @@ if ping -c 1 8.8.8.8 > /dev/null 2>&1; then
   pip install -r requirements.txt || { echo "Failed to install Python packages."; exit 1; }
   mv /root/Firmware/lib/flow.py venv/lib/python3.6/site-packages/google_auth_oauthlib/flow.py || { echo "Failed to move flow.py."; exit 1; }
 
-  # automatically run the stand_up script on boot
-  line_to_add="source /root/Firmware/shell_scripts/run_stand_up.sh &"
-  rc_local_file="/etc/rc.local"
-  # Check if the line already exists in rc.local
-  if grep -qF "$line_to_add" "$rc_local_file"; then
-    echo "Line already exists in rc.local. No changes needed."
-  else
-    # Add the line before 'exit 0' in rc.local
-    sed -i "/^exit 0/i $line_to_add" "$rc_local_file" || { echo "Failed to add line to rc.local."; exit 1; }
-    echo "Line added successfully to rc.local."
-  fi
+  # # automatically run the stand_up script on boot
+  # line_to_add="source /root/Firmware/shell_scripts/run_stand_up.sh &"
+  # rc_local_file="/etc/rc.local"
+  # # Check if the line already exists in rc.local
+  # if grep -qF "$line_to_add" "$rc_local_file"; then
+  #   echo "Line already exists in rc.local. No changes needed."
+  # else
+  #   # Add the line before 'exit 0' in rc.local
+  #   sed -i "/^exit 0/i $line_to_add" "$rc_local_file" || { echo "Failed to add line to rc.local."; exit 1; }
+  #   echo "Line added successfully to rc.local."
+  # fi
   # automatically run the check_and_restart script every minute
   (crontab -l ; echo "* * * * * source /root/Firmware/shell_scripts/check_and_restart.sh") | crontab -
   echo "check_and_restart.sh added to crontab."

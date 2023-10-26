@@ -45,7 +45,7 @@ def upload_loop(rtc, status_queue):
     
     # set up logging
     logging.basicConfig(filename= LOG_FILE , level=logging.DEBUG, format='%(asctime)s %(message)s')
-    logging.info('upload thread started')
+    logging.info('upload thread: started')
 
     with lock:
         config = configparser.ConfigParser()
@@ -57,14 +57,14 @@ def upload_loop(rtc, status_queue):
         ONLINE_CONFIG = config.get('DEFAULT', 'ONLINE_CONFIG')
     
 
-    # Update RTC with the current time if internet connection is available
+    # Update RTC with the current time if internet connection is available and upload config file to google drive
     if google_drive.is_internet_available():
         dt = get_time_from_internet()
         rtc.write_datetime(dt)
-        print(ONLINE_CONFIG)
+        print(f"Use global config file: {ONLINE_CONFIG}")
         if ONLINE_CONFIG == "true": # if online config is true, download config from google drive
             print("downloading config")
-            google_drive.download_file(service = None, file_name = CONFIG_FILE, destination = TEMP_DIR)
+            google_drive.download_file(service = None, parent_folder_id = 'root' , file_name = CONFIG_FILE, destination = TEMP_DIR)
             
             new_config = configparser.ConfigParser()
             new_config.read(os.path.join(TEMP_DIR, CONFIG_FILE))
@@ -78,10 +78,9 @@ def upload_loop(rtc, status_queue):
                 new_config.set('DEFAULT', key, value)
             with open(CONFIG_FILE, 'w') as f:
                 new_config.write(f)
-    
-    # else:
-        # If internet connection is not available, turn on the red LED to indicate an error
-        #print("no internet")
+                
+        # upload config file to google drive folder of device
+        google_drive.backup_config_file(parent_folder_name=DEVICE_ID)
         
 
     # Continuously check for an internet connection and backup data to Google Drive
@@ -99,10 +98,11 @@ def upload_loop(rtc, status_queue):
             SLEEP_AT = config.get('DEFAULT', 'SLEEP_AT')
             ID = config.get('DEFAULT', 'ID')
             ONLINE_CONFIG = config.get('DEFAULT', 'ONLINE_CONFIG')
-            print(ONLINE_CONFIG)
+            print(f"Use global config file: {ONLINE_CONFIG}")
             if ONLINE_CONFIG == "true": # if online config is true, download config from google drive
                 print("downloading config")
-                google_drive.download_file(service = None, file_name = CONFIG_FILE, destination = TEMP_DIR)
+                google_drive.download_file(service = None, parent_folder_id = 'root' , file_name = CONFIG_FILE, destination = TEMP_DIR)
+                logging.info('upload thread: config file fetched from google drive')
                 
                 new_config = configparser.ConfigParser()
                 new_config.read(os.path.join(TEMP_DIR, CONFIG_FILE))
@@ -116,6 +116,9 @@ def upload_loop(rtc, status_queue):
                     new_config.set('DEFAULT', key, value)
                 with open(CONFIG_FILE, 'w') as f:
                     new_config.write(f)
+                # upload config file to google drive folder of device
+                google_drive.backup_config_file(parent_folder_name=DEVICE_ID)
+                logging.info('upload thread: config file uploaded to google drive')
             
         if (rtc.read_datetime() - last_upload_try).total_seconds() > UPLOAD_PERIOD:
             last_upload_try = rtc.read_datetime()
@@ -130,7 +133,8 @@ def upload_loop(rtc, status_queue):
                 try:
                     google_drive.upload(DEVICE_ID)
                 except Exception as e:
-                    print(f"problem encountered while uploading:\n{e}")            
+                    print(f"problem encountered while uploading:\n{e}")        
+                logging.info('upload thread: data uploaded')    
                 status_queue.append(("uploading", False))
 
             else:

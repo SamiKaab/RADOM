@@ -28,7 +28,7 @@ import lib.full_color_led as led
 import backup_to_drive as google_drive
 from lib.battery import compute_battery_level
 
-from shared_resources import stop_event, CONFIG_FILE
+from shared_resources import stop_event, CONFIG_FILE, TEMP_DIR, DEVICE_ID
 from sensor_thread import read_write_loop
 from upload_thread import upload_loop
 from led_thread import pulsate_led
@@ -408,12 +408,12 @@ def save_config():
         config_data = check_config_values(config_data)
         print(config_data)
         update_config_file(config_data)
-        if config_data['make_global'] == "true":
-            # check if the internet is available
-            if google_drive.is_internet_available():
-                backup_config_file()
-            else:
-                message = "Internet is not available. Please connect to the internet and try again."
+        if google_drive.is_internet_available():
+            if config_data['make_global'] == "true":
+                google_drive.backup_config_file(parent_folder_id="root")
+            google_drive.backup_config_file(parent_folder_name=DEVICE_ID)
+        else:
+            message = "Internet is not available. Please connect to the internet and try again."
         # apply the changes
         if not stop_event.is_set():
             stop_event.set()
@@ -425,22 +425,32 @@ def save_config():
         print(e)
         return jsonify({"error": str(e)}), 400
 
-
-def backup_config_file():
+@app.route('/reboot', methods=['POST'])
+def reboot():
+    # run command reboot
     try:
-        google_drive.delete_file(service = None, file_name = CONFIG_FILE)
-        # check if the internet is available
-        if google_drive.is_internet_available():
-            print("uploading config file to the internet")
-            # upload the config file to the internet
-            google_drive.upload_file(service=None, file_path=CONFIG_FILE, parent_folder_id="root")
+        stop_event.set()
+        time.sleep(2)
+        
+        # shutdown flask app
+        shutdown_server()
+            
+              
+        subprocess.run("reboot", shell=True)
+        return jsonify({"status": "success"})
     except Exception as e:
-        print(e)
+        return jsonify({"status": "error", "message": str(e)})
 
+def shutdown_server():
+    # shutdown flask app
+    shutdown = request.environ.get('werkzeug.server.shutdown')
+    if shutdown:
+        shutdown()
 
 if __name__ == "__main__":
     try:
-        
+        #Delete content of the temp folder
+        subprocess.run(f"rm -rf {TEMP_DIR}/*", shell=True)
         # Create an empty queue
         led_status_queue = deque()
         led_status_queue.append(("settingUp", True))
@@ -463,9 +473,11 @@ if __name__ == "__main__":
         config = configparser.ConfigParser()
         config.read(CONFIG_FILE)
         if config.get('DEFAULT', 'STOPPED') == 'true':
+            led_status_queue.append(("recording", False))
             stop_event.set()
         else:
             stop_event.clear()
+            
         # Use Waitress to serve the Flask app
         serve(app, host='0.0.0.0', port=5000)
 
