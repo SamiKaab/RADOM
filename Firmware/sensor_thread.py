@@ -8,7 +8,7 @@ import lib.human_presence as human_presence
 from lib.PiicoDev_VL53L1X import PiicoDev_VL53L1X
 import lib.battery as battery
 from shared_resources import FILE_HEADER, DATA_DIR, CONFIG_FILE, DEVICE_ID, TEMP_DIR, stop_event, lock, device_should_record, LOG_FILE,ROOT_DIR
-import logging
+# import logging
 
 def write_data_to_file(fileName, data):
     """
@@ -67,8 +67,8 @@ def read_write_loop(rtc, status_queue, sensor_data_queue):
     Returns:
         None.
     """
-    logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG, format='%(asctime)s %(message)s')
-    logging.info("sensor_thread: starting read_write_loop")
+    # logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG, format='%(asctime)s %(message)s')
+    # logging.info("sensor_thread: starting read_write_loop")
 
     with lock:
         config = configparser.ConfigParser()
@@ -113,7 +113,7 @@ def read_write_loop(rtc, status_queue, sensor_data_queue):
             newFilePath = os.path.join(ROOT_DIR,DATA_DIR,ID,date,f"{DEVICE_ID}_{ID}_{formattedDatetime}.csv")
             create_folders(newFilePath)
             os.rename(fileName,f"{newFilePath}")
-            logging.info("sensor_thread: stop event set, stopping recording")
+            # logging.info("sensor_thread: stop event set, stopping recording")
 
             
         elif stop and not stop_event.is_set(): # the stop event has been cleared and we need to start recording again
@@ -133,7 +133,7 @@ def read_write_loop(rtc, status_queue, sensor_data_queue):
             fileName = os.path.join(ROOT_DIR,TEMP_DIR,f"{DEVICE_ID}_{ID}_{formattedDatetime}")  
             lastNewFileTime = now
             stop = False
-            logging.info("sensor_thread: stop event cleared, starting recording again")
+            # logging.info("sensor_thread: stop event cleared, starting recording again")
     
         if device_should_record(WAKE_AT, SLEEP_AT, rtc) and not stop:
 
@@ -156,7 +156,7 @@ def read_write_loop(rtc, status_queue, sensor_data_queue):
 
             elapsed = now - lastNewFileTime
             if elapsed > timedelta(seconds=NEW_FILE_PERIOD): # create a new file
-                logging.info("sensor_thread: creating new file")
+                # logging.info("sensor_thread: creating new file")
                 # closed the last file
                 write_data_to_file(fileName, data)
                 data = [FILE_HEADER]
@@ -174,7 +174,7 @@ def read_write_loop(rtc, status_queue, sensor_data_queue):
             # Write data to CSV file after set amount of time has elapsed
             elapsed = now - lastWriteTime
             if elapsed > timedelta(seconds=WRITE_PERIOD):
-                logging.info("sensor_thread: writing data to file")
+                # logging.info("sensor_thread: writing data to file")
                 write_data_to_file(fileName, data)
                 # Reset data and time for the next write interval
                 data = []
@@ -192,4 +192,4 @@ def read_write_loop(rtc, status_queue, sensor_data_queue):
     recording = False
     status_queue.append(("recording", recording))
     print("read_write_loop exiting")
-    logging.info("read_write_loop exiting")
+    # logging.info("read_write_loop exiting")

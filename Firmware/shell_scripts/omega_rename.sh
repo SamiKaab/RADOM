@@ -18,7 +18,7 @@ new_line="DEVICE_ID ='${id}'"
 # Replace the old line with the new line in the shared resources file
 sed -i "s|DEVICE_ID =.*|${new_line}|" /root/Firmware/shared_resources.py
 
-echo "Set DEVICE_ID to ${id}" 
+echo "Set DEVICE_ID to ${id}"
 
 # Generate the new hostname
 new_line="option hostname '${new_name}-${id}'"
@@ -40,19 +40,19 @@ sed -i "s|option ssid 'Omega-.*|${new_line}|" /etc/config/wireless
 
 echo "Wifi name changed to ${new_name}-${id}"
 
-# ask for a new password for the omega's wifi
-pwd=""
-while [ ${#pwd} -le 7 ]; do
-    read -p "Enter a password (must be longer than 7 characters): " pwd
-done
+# # # # ask for a new password for the omega's wifi
+# # # pwd=""
+# # # while [ ${#pwd} -le 7 ]; do
+# # #     read -p "Enter a password (must be longer than 7 characters): " pwd
+# # # done
 
-new_line="option key '${pwd}'"
+# # # new_line="option key '${pwd}'"
 
-sed -i "/^config wifi-iface 'ap'$/,/^$/ s/option key '.*'/option key '$pwd'/" /etc/config/wireless
+# # # sed -i "/^config wifi-iface 'ap'$/,/^$/ s/option key '.*'/option key '$pwd'/" /etc/config/wireless
 
-echo "Wifi password changed"
+# # # echo "Wifi password changed"
 
 # change the Omega root password
-passwd root
+echo -e \"beupstanding\\nbeupstanding\" | passwd
 
-/etc/init.d/network restart
+# /etc/init.d/network restart

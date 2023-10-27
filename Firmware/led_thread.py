@@ -2,13 +2,12 @@
 import lib.full_color_led as led
 from shared_resources import FILE_HEADER, DATA_DIR, CONFIG_FILE,stop_event, lock,LOG_FILE, CONFIG_FILE
 import time
-import logging
+# import logging
 import configparser
 # Function to pulsate the LED with a specified frequency and color
 def pulsate_led(led_status_queue, status_queue):
-    # INITIATE LOGGING
-    logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-    logging.info("Pulsate LED thread started")    
+    # logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+    # logging.info("Pulsate LED thread started")    
     color = [0, 0, 0]
 
     colors = []

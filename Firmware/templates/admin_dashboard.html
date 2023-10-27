@@ -158,16 +158,6 @@
                         
                         <label for="upload_period">Upload Period (seconds):</label>
                         <input type="number" id="upload_period" name="upload_period" value={{UP}} min="1">
-                        <div class="form-group">
-                            <label for="online_config">Use Glogal Settings</label>
-                            <input type="checkbox" id="online_config" name="online_config" value={{OC}}>
-                        </div>
-                        <p>If set the settings above will be ignored and will instead be fetched from the cloud.</p>
-                        <div class="form-group">
-                            <label for="make_global">Make Settings Global</label>
-                            <input type="checkbox" id="make_global" name="make_global" value="false">
-                        </div>
-                        <p>Make these settings global for all devices. Any device that has "Use Glogal Settings" set will use these settings.</p>
                     </div>
                     
                     <button class="button" id= "saveButton">Save</button>
@@ -228,7 +218,7 @@
          
                 
                 <!--add a note-->
-                <p id="passwordNote">Note: The password must be at least 8 characters long and only contain letters and numbers. This will change the admin password as well as the device's wifi pasword and root pasword.</p>
+                <p id="passwordNote">Note: The password must be at least 8 characters long and only contain letters and numbers. This will change the admin password as well as the root pasword.</p>
             </div>
         </div>
             

@@ -166,13 +166,15 @@ def list_files(service, folder_id=None):
                 pageSize=1000, fields="nextPageToken, files(id,name,mimeType,size,createdTime,modifiedTime)").execute()
         else:
             results = service.files().list(
-                q="'root' in parents and mimeType='application/vnd.google-apps.folder'",
+                q="'root' in parents",# and mimeType='application/vnd.google-apps.folder'",
                 pageSize=1000, fields="nextPageToken, files(id,name,mimeType,size,createdTime,modifiedTime)").execute()
 
         items = results.get('files', [])
         return items
     except:
         return []
+    
+
 
 def convert_size(size_in_bytes):
     """ Convert the size of a file from bytes to a human-readable format.
@@ -487,6 +489,8 @@ class DeleteThread(QThread):
     def run(self):
         """ Run the thread.
         """
+        if self.file_id == None:
+            self.file_id = 'root'
         manage_file(self.service, self.file_id, action='delete', progress_callback=self.update_progress)
 
     def update_progress(self, progress):

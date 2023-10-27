@@ -18,8 +18,7 @@ import configparser
 from waitress import serve
 import json
 import subprocess
-import requests
-import fileinput
+import logging
 
 
 
@@ -284,9 +283,8 @@ def admin_dashboard():
         NEW_FILE_PERIOD = config.getint('DEFAULT', 'NEW_FILE_PERIOD')
         LED_INTENSITY = config.getint('DEFAULT', 'LED_INTENSITY') 
         WRITE_PERIOD = config.getint('DEFAULT', 'WRITE_PERIOD')
-        ONLINE_CONFIG = config.getboolean('DEFAULT', 'ONLINE_CONFIG')
 
-        return render_template('admin_dashboard.html', ID=ID, SP=SAMPLING_PERIOD, WAKE_AT=WAKE_AT, SLEEP_AT=SLEEP_AT, UP=UPLOAD_PERIOD, NFP=NEW_FILE_PERIOD, LED_INTENSITY=LED_INTENSITY, WP=WRITE_PERIOD, OC=ONLINE_CONFIG)
+        return render_template('admin_dashboard.html', ID=ID, SP=SAMPLING_PERIOD, WAKE_AT=WAKE_AT, SLEEP_AT=SLEEP_AT, UP=UPLOAD_PERIOD, NFP=NEW_FILE_PERIOD, LED_INTENSITY=LED_INTENSITY, WP=WRITE_PERIOD)
     else:
         return redirect(url_for('home'))
 
@@ -302,8 +300,7 @@ def guest_dashboard():
     NEW_FILE_PERIOD = config.getint('DEFAULT', 'NEW_FILE_PERIOD')
     LED_INTENSITY = config.getint('DEFAULT', 'LED_INTENSITY') 
     WRITE_PERIOD = config.getint('DEFAULT', 'WRITE_PERIOD')
-    ONLINE_CONFIG = config.getboolean('DEFAULT', 'ONLINE_CONFIG')
-    return render_template('guest_dashboard.html', ID=ID, SP=SAMPLING_PERIOD, WAKE_AT=WAKE_AT, SLEEP_AT=SLEEP_AT, UP=UPLOAD_PERIOD, NFP=NEW_FILE_PERIOD, LED_INTENSITY=LED_INTENSITY, WP=WRITE_PERIOD, OC=ONLINE_CONFIG)
+    return render_template('guest_dashboard.html', ID=ID, SP=SAMPLING_PERIOD, WAKE_AT=WAKE_AT, SLEEP_AT=SLEEP_AT, UP=UPLOAD_PERIOD, NFP=NEW_FILE_PERIOD, LED_INTENSITY=LED_INTENSITY, WP=WRITE_PERIOD)
 
     
 @app.route('/wifi_settings', methods=['GET'])
@@ -408,12 +405,12 @@ def save_config():
         config_data = check_config_values(config_data)
         print(config_data)
         update_config_file(config_data)
-        if google_drive.is_internet_available():
-            if config_data['make_global'] == "true":
-                google_drive.backup_config_file(parent_folder_id="root")
-            google_drive.backup_config_file(parent_folder_name=DEVICE_ID)
-        else:
-            message = "Internet is not available. Please connect to the internet and try again."
+        # if google_drive.is_internet_available():
+        #     if config_data['make_global'] == "true":
+        #         google_drive.backup_config_file(parent_folder_id="root")
+        #     google_drive.backup_config_file(parent_folder_name=DEVICE_ID)
+        # else:
+        #     message = "Internet is not available. Please connect to the internet and try again."
         # apply the changes
         if not stop_event.is_set():
             stop_event.set()
@@ -479,6 +476,7 @@ if __name__ == "__main__":
             stop_event.clear()
             
         # Use Waitress to serve the Flask app
+        logging.getLogger('waitress.queue').setLevel(logging.ERROR)
         serve(app, host='0.0.0.0', port=5000)
 
         data_thread.join()

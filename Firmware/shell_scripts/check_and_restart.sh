@@ -1,6 +1,7 @@
 #!/bin/sh
 
-# Define your Python program name
+# A shell script to check if a program is running and restart it if it's not.
+
 PROGRAM_NAME="main_flask"
 
 # Check if the program is running

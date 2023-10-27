@@ -109,39 +109,67 @@ plotlyChart = Plotly.newPlot('plotly-chart', [{
     mode: 'lines+markers',
 }], layout, config);
 
+var sampling_period = 1000;
+var recording  = false;
 // a function to update the graph: takes in barcolors, xdata, ydata
 function updateGraph() {
-    fetch('/update_data', {
+    fetch('/get_device_info', {
         method: 'GET',
         headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json',
         },
     })
     .then(response => response.json())
     .then(data => {
-        //iterate over data.presence if presence is true, set color to green, else red
-        for (var i = 0; i < data.presence.length; i++) {
-            if (data.presence[i] == true) {
-                barColors[i] = '#5699b1';
-            } else {
-                barColors[i] = '#C1c1c1';
-            }
+        sampling_period = data.SP * 1000;
+        if (data.STATUS === "Not Recording") {
+            recording = false;
         }
-        
-        xData = data.datetime;
-        yData = data.distance
+        else if (data.STATUS === "Recording") {
+            recording = true;
+        }
 
-        // Update the chart with the new data and colors
-        Plotly.update('plotly-chart', {
-            x: [xData],
-            y: [yData],
-            'marker.color': [barColors],
-        },config);
     })
     .catch(error => {
-        console.error('Error fetching sensor data:', error);
-    });
+        console.error('Error fetching device info:', error);
+    }   
+    );
+
+    if (recording == true) {
+        fetch('/update_data', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            //iterate over data.presence if presence is true, set color to green, else red
+            for (var i = 0; i < data.presence.length; i++) {
+                if (data.presence[i] == true) {
+                    barColors[i] = '#5699b1';
+                } else {
+                    barColors[i] = '#C1c1c1';
+                }
+            }
+            
+            xData = data.datetime;
+            yData = data.distance
+
+            // Update the chart with the new data and colors
+            Plotly.update('plotly-chart', {
+                x: [xData],
+                y: [yData],
+                'marker.color': [barColors],
+            },config);
+        })
+        .catch(error => {
+            console.error('Error fetching sensor data:', error);
+        });
+    }
+    // sleep for sampling period
+    setTimeout(updateGraph, sampling_period);
+
 }
 
-// Call updateGraph() every second
-setInterval(updateGraph, 1000);
+updateGraph();

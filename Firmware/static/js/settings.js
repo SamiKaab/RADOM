@@ -189,8 +189,6 @@ document.getElementById('saveButton').addEventListener('click', function() {
         wake_at: document.getElementById('wake_at').value,
         sleep_at: document.getElementById('sleep_at').value,
         led_intensity: document.getElementById('led_intensity').value,
-        online_config: document.getElementById('online_config').checked ? "true" : "false",
-        make_global: document.getElementById('make_global').checked ? "true" : "false"
     };
     
     // Generate JSON data from the form data

@@ -1,5 +1,7 @@
 // Function to fetch and update the device ID
 function updateDeviceInfo() {
+    const loader = document.getElementById("loadingDiv");
+    const overlay = document.getElementById('overlay');
     fetch('/get_device_info', {
         method: 'GET',
         headers: {
@@ -33,17 +35,13 @@ function updateDeviceInfo() {
             if (data.STATUS === "Not Recording") {
                 deviceStatusElement.style.color = "red";
             } 
-            else if (data.STATUS === "Recording with no internet"){
+            else if (data.STATUS === "Recording"){
                 // Reset the font color to its default value for other statuses
                 deviceStatusElement.style.color = "green"; // You can change this to your desired default color
             }
             else if (data.STATUS === "Uploading"){
                 // Reset the font color to its default value for other statuses
                 deviceStatusElement.style.color = "lightblue"; // You can change this to your desired default color
-            }
-            else if (data.STATUS === "Recording with internet"){
-                // Reset the font color to its default value for other statuses
-                deviceStatusElement.style.color = "blue"; // You can change this to your desired default color
             }
             else if (data.STATUS === "Sleeping"){
                 // Reset the font color to its default value for other statuses
@@ -59,8 +57,13 @@ function updateDeviceInfo() {
             }
 
         }
+        loader.style.display = "none";
+        overlay.style.display = "none";
     })
+    
     .catch(error => {
+        loader.style.display = "block";
+        overlay.style.display = "flex";
         var deviceStatusElement = document.getElementById('device-status')
         deviceStatusElement.textContent = "Restart device";
         deviceStatusElement.style.color = "black";
