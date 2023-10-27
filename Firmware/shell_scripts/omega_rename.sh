@@ -53,6 +53,6 @@ echo "Wifi name changed to ${new_name}-${id}"
 # # # echo "Wifi password changed"
 
 # change the Omega root password
-echo -e \"beupstanding\\nbeupstanding\" | passwd
+echo -e beupstanding\\nbeupstanding | passwd
 
 # /etc/init.d/network restart
