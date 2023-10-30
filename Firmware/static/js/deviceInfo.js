@@ -1,7 +1,7 @@
 // Function to fetch and update the device ID
 function updateDeviceInfo() {
     const loader = document.getElementById("loadingDiv");
-    const overlay = document.getElementById('overlay');
+    const overlay = document.getElementById('loaderOverlay');
     fetch('/get_device_info', {
         method: 'GET',
         headers: {
