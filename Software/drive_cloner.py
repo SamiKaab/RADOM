@@ -1,3 +1,13 @@
+"""
+This script takes a folder ID and a parent directory as arguments. It uses the Google Drive API to list all files in the given folder. 
+If the folder is empty and not the root folder, it deletes the folder from Google Drive. For each file in the folder, it checks the MIME type. 
+If the file is a folder, it creates a corresponding local directory and recursively downloads its contents. If the file is not a folder, it checks if the file already exists locally. 
+If it does, it skips the download and deletes the file from Google Drive. If it doesn't, it downloads the file and verifies it using an MD5 hash. 
+If the hash matches the expected hash, it deletes the file from Google Drive. If the hash does not match, it deletes the local file.
+
+
+
+"""
 import os
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -141,15 +151,15 @@ def delete_all_files():
 
 if __name__ == '__main__':
     # # Start downloading from the root folder
-    # download_folder_contents('root', BASE_DOWNLOAD_DIR)
+    download_folder_contents('root', BASE_DOWNLOAD_DIR)
 
-    # print("All files and folders downloaded, verified, and cloned from Google Drive.")
+    print("All files and folders downloaded, verified, and cloned from Google Drive.")
     
-    # # downloaded_file_path = 'DriveData\\A4A5\\data\\SKA03\\231005\\SKA03_231005_20244.csv'
-    # # downloaded_size = os.path.getsize(downloaded_file_path)
-    # # print(downloaded_size)
-    # delete_all_files()
-    folder_struct =  list_folder_structure(drive_service)
-    print(folder_struct)
-    pretty_print_folder_structure(folder_struct)
+    # # # downloaded_file_path = 'DriveData\\A4A5\\data\\SKA03\\231005\\SKA03_231005_20244.csv'
+    # # # downloaded_size = os.path.getsize(downloaded_file_path)
+    # # # print(downloaded_size)
+    # # delete_all_files()
+    # folder_struct =  list_folder_structure(drive_service)
+    # print(folder_struct)
+    # pretty_print_folder_structure(folder_struct)
 
