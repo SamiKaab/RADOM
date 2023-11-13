@@ -8,53 +8,36 @@ This project utilises a Omega2 Pro to read data from a human presence sensor and
 - [DFRobot_mmWave module](https://www.dfrobot.com/product-2282.html)
 - [PiicoDev_VL53L1X module](https://www.sparkfun.com/products/14722)
 - [SDL_DS3231 module](https://www.jaycar.com.au/rtc-clock-module-for-raspberry-pi/p/XC9044?pos=1&queryId=f5734bdf10cb6c5024d07c37201f1d5b&sort=relevance&searchText=rtc)
+- [LiPo battery 3.7V 1100mAh](https://core-electronics.com.au/polymer-lithium-ion-battery-1000mah-38458.html)
 - Jumper wires
+- USB A to micro USB cable
   
 
-<!-- Verify that the Omega2 Pro is connected to internet:
-```sh
-ping duckduckgo.com
-``` 
-Update the Rapsberry Pi install git and clone this project:
-```sh
-git clone https://github.com/SamiKaab/Be-Up-Standing
-```
-```sh
-cd Be-Up-Standing
-pip3 install -r requirements.txt
-```
-in order to for the program to run on but a service routine needs to be created:
-and copy the following lines: -->
 
-
-# wiring scematic
+# Wiring schematic
 <!--embed image center a resized with original ratio: Documentation/Wiring_Diagram.png-->
 <p align="center">
   <img src="Documentation/Wiring_Diagram.png" width="400">
 </p>
 
 # Setting up the Omega2 Pro
+The Omega2 Pro is a headless device, meaning that it does not have a screen or keyboard. In order to set it up you need to connect it to a computer using a micro USB cable and connect to it using a serial terminal.
+The device requires internet access in order to install the necessary packages.
 
+```sh
+wifisetup add -ssid <ssid> -encr psk2 -password <password>
+```
 ```sh
 wifisetup add -ssid BadLuck -encr psk2 -password trc5X2pl52X51
 ```
-Follow the Omega2 Pro [getting started tutorial](https://onion.io/omega2-pro-get-started/). Once you have done that check that the Omega2 is able to connect to internet using the following command:
+
+Replace ssid and password with the name and password of your wifi network.
+You should now have internet access, which you can verify by pinging a website:
+
 ```sh
 ping duckduckgo.com
 ```
-You should get a similar output to this:
-```
-Pinging duckduckgo.com [20.43.111.112] with 32 bytes of data:
-Reply from 20.43.111.112: bytes=32 time=18ms TTL=113
-Reply from 20.43.111.112: bytes=32 time=18ms TTL=113
-Reply from 20.43.111.112: bytes=32 time=18ms TTL=113
-Reply from 20.43.111.112: bytes=32 time=18ms TTL=113
 
-Ping statistics for 20.43.111.112:
-    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),
-Approximate round trip times in milli-seconds:
-    Minimum = 18ms, Maximum = 18ms, Average = 18ms
-```
 We first need to install git and ca-bundle in order to be able to clone the repository:
 ```sh
 opkg update && opkg install git git-http ca-bundle
@@ -72,9 +55,10 @@ Next run the omega_rename script:
 ```sh
 source ./shell_scripts/omega_rename.sh
 ```
-This script will amongst other things change the default wifi name and password of the omega as well as the device's password.
-The device should now be ready for use. just restart the device.
-```
+This script will amongst other things change the default wifi name and password of the omega as well as the device's password.  
+The device should now be ready for use. Just restart it using ```reboot``` and it should start running the program on startup.
+
+
 
 # Setting up a google drive API
 The data recorded is uploaded to a google drive using the google drive api. For the program to use the api it is necessary to generate a credentials file.
