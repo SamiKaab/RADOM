@@ -4,8 +4,16 @@ from shared_resources import FILE_HEADER, DATA_DIR, CONFIG_FILE,stop_event, lock
 import time
 # import logging
 import configparser
-# Function to pulsate the LED with a specified frequency and color
+
 def pulsate_led(led_status_queue, status_queue):
+    """
+        This function pulsates the LED with different colors and intensities based on the status of the device.
+
+        Parameters:
+            led_status_queue (deque): A queue that contains the status of the device which this thread will use to determine the color of the LED.
+            status_queue (deque): A queue that contains the computed status of the led which will be used by the flask app to display the status of the device.
+        
+    """
     # logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
     # logging.info("Pulsate LED thread started")    
     color = [0, 0, 0]
@@ -119,8 +127,5 @@ def pulsate_led(led_status_queue, status_queue):
         led.set_led_color(r, g, b)
         time.sleep(period/(2*nb_steps))
 
-        # for intensity in range(max_intensity, -1, -1):
-        #     led.set_led_color(red * intensity // max_intensity, green * intensity // max_intensity, blue * intensity // max_intensity)
-        #     time.sleep(period / (2 * max_intensity))
     led.set_led_color(0,0,0)
     print("Pulsate LED thread stopped")

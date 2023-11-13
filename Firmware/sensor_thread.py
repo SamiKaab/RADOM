@@ -19,9 +19,6 @@ def write_data_to_file(fileName, data):
     Args:
         fileName (str): The name of the file to write to.
         data (list): A list of data to write to the file.
-
-    Returns:
-        None.
     """
     # for folders in filename, create them if they don't exist  
     path = "/"
@@ -45,9 +42,6 @@ def create_folders(fileName):
 
     Args:
         fileName (str): The file path to create folders in.
-
-    Returns:
-        None.
     """
     path = "/"
     fileName = os.path.normpath(fileName)
@@ -63,9 +57,6 @@ def read_write_loop(rtc, status_queue, sensor_data_queue):
     This function reads sensor data from the human presence sensor and distance sensor, and stores
     it in a list. The data is then written to a CSV file with the specified file name every `WRITE_PERIOD`
     seconds.
-
-    Returns:
-        None.
     """
     # logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG, format='%(asctime)s %(message)s')
     # logging.info("sensor_thread: starting read_write_loop")

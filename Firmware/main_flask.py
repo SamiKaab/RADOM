@@ -39,21 +39,12 @@ sensor_presence = []
 sensor_distance = []
 
 
-
-def signal_handler(sig, frame):
-    # Set the stop_event flag to False when Ctrl-C is pressed
-    if not stop_event.is_set():
-        stop_event.set()
-    elif stop_event.is_set():
-        stop_event.clear()
-
-    print("Ctrl-C pressed")
-
-
-
-
-
 def internet_check_loop(led_status_queue):
+    """ Checks if the internet is available and updates the led_status_queue accordingly
+
+    Args:
+        led_status_queue (deque): A queue that contains the status of the device for the led thread.
+    """
     while True:
         try:
             connected = google_drive.is_internet_available()
@@ -65,6 +56,13 @@ def internet_check_loop(led_status_queue):
 
 
 def add_wifi_config(ssid, encryption, key):
+    """Adds a new wifi config to the wireless file
+
+    Args:
+        ssid (str): The ssid of the wifi network
+        encryption (str): The encryption type of the wifi network
+        key (str): The password of the wifi network
+    """
     wifi_config = (
         'config wifi-config\n'
         f'\toption key \'{key}\'\n'
@@ -76,10 +74,15 @@ def add_wifi_config(ssid, encryption, key):
     with open('/etc/config/wireless', 'a') as f:
         f.write(wifi_config)
 
-    return True
-
     
 def delete_wifi_config(ssid):
+    """
+    Deletes the wifi configuration for the given SSID from the wireless configuration file.
+
+    Args:
+        ssid (str): The SSID of the wifi configuration to be deleted.
+
+    """
     with open('/etc/config/wireless', 'r') as f:
         lines = f.readlines()
 
@@ -98,6 +101,12 @@ def delete_wifi_config(ssid):
         f.writelines(new_lines)
 
 def cleanup_expired_sessions(session_dir):
+    """
+    Deletes expired session files from the given directory.
+
+    Args:
+        session_dir (str): The path to the directory containing the session files.
+    """
     now = datetime.datetime.now()
     for session_file in glob.glob(os.path.join(session_dir, '*')):
         file_timestamp = datetime.datetime.fromtimestamp(os.path.getmtime(session_file))
@@ -107,8 +116,6 @@ def cleanup_expired_sessions(session_dir):
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
-
-
 
 # Configure Flask-Session
 app.config['SESSION_TYPE'] = 'filesystem'
@@ -122,6 +129,8 @@ Session(app)
             
 @app.before_request
 def check_session_timeout():
+    """Checks if the session has timed out and resets the user_role if it has.
+    """
     if 'user_role' in session:
         if 'last_login' not in session:
             pass
@@ -137,6 +146,11 @@ def home():
 # SSE route to send real-time data to the client
 @app.route('/update_data', methods=['GET'])
 def update_data():
+    """Sends the latest sensor data to the client
+
+    Returns:
+        JSON: A JSON object containing the latest sensor data
+    """
     if len(sensor_data_queue):
         while len(sensor_data_queue):
             # Get the latest data from the queue
@@ -160,12 +174,21 @@ def update_data():
 
 @app.route('/get_battery', methods=['GET'])
 def get_battery():
+    """
+        Returns the battery level of the device
+    """
     battery_level = int(compute_battery_level())
     return jsonify({'battery_level': battery_level})
 
 
 @app.route('/button_click', methods=['POST'])
 def button_click():
+    """
+    Handles the button click event
+
+    Returns:
+        JSON: A JSON object containing the action to be taken
+    """
     data = request.json
     action = data.get('action')
 
@@ -190,6 +213,9 @@ def button_click():
 
 @app.route('/get_device_info', methods=['GET'])
 def get_device_id():
+    """
+        Returns the device ID
+    """
     config = configparser.ConfigParser()
     config.read(CONFIG_FILE)
     ID = config.get('DEFAULT', 'ID')
@@ -204,6 +230,12 @@ def get_device_id():
 
 @app.route('/check_password', methods=['POST'])
 def check_password():
+    """
+    Checks if the password entered by the user is correct
+
+    Returns:
+        JSON: A JSON object containing a boolean value indicating if the password is correct and the redirect url
+    """
     data = request.json
     password = data.get('password')
     config = configparser.ConfigParser()
@@ -223,6 +255,13 @@ def check_password():
 
 @app.route('/change_password', methods=['POST'])
 def change_password():
+    """
+    Changes the password of the device
+    
+    Returns:
+        JSON: A JSON object containing a boolean value indicating if the password is correct and the redirect url   
+    """
+        
     data = request.get_json()
     print(data)
     config = configparser.ConfigParser()
@@ -263,6 +302,12 @@ def change_password():
 
 @app.route('/session', methods=['GET'])
 def get_session():
+    """
+    Returns the user role of the current session
+    
+    Returns:
+        JSON: A JSON object containing the user role of the current session
+    """
     if 'user_role' in session:
         return jsonify({'user_role': session['user_role']})
     else:
@@ -270,6 +315,12 @@ def get_session():
 
 @app.route('/dashboard/admin')
 def admin_dashboard():
+    """
+    Renders the admin dashboard page if the user is authenticated as an admin or redirects to the home page if the user is not authenticated
+    
+    Returns:
+        HTML: The HTML page to be rendered with the device configuration
+    """
     # Check if the user is authenticated as an admin
     print(f"{session.get('user_role')}")
     if session.get('user_role') == 'admin':
@@ -290,6 +341,13 @@ def admin_dashboard():
 
 @app.route('/dashboard/guest')
 def guest_dashboard():
+    """
+    Renders the guest dashboard page
+    
+    Returns:
+        HTML: The HTML page to be rendered with the device configuration
+    """ 
+        
     config = configparser.ConfigParser()
     config.read(CONFIG_FILE)
     ID = config.get('DEFAULT', 'ID')
@@ -305,6 +363,13 @@ def guest_dashboard():
     
 @app.route('/wifi_settings', methods=['GET'])
 def get_wifi():
+    """
+    Returns the list of available wifi networks
+    
+    Returns:
+        JSON: A JSON object containing the list of available wifi networks  
+    """
+        
     print("get_wifi")
     if session.get('user_role') == 'admin':
         try:
@@ -322,6 +387,13 @@ def get_wifi():
 
 @app.route('/add_wifi', methods=['POST'])
 def add_network():
+    """
+    Adds a new wifi network to the device
+    
+    Returns:
+        JSON: A JSON object containing the status of the operation
+    """
+        
     # print the form data from the POST request
     print(request.get_json())
     # /usr/bin/wifisetup add -ssid <ssid> -encr <encryption type> -password <password>
@@ -337,7 +409,15 @@ def add_network():
 
 @app.route('/remove/<ssid>', methods=['POST'])
 def remove_network(ssid):
-    print(ssid)
+    """
+    Removes a wifi network from the device
+
+    Args:
+        ssid (str): The SSID of the wifi network to be removed
+
+    Returns:
+        JSON: A JSON object containing the status of the operation
+    """
     try:
         # output = subprocess.check_output(['/usr/bin/wifisetup', 'remove', '-ssid' , ssid], stderr=subprocess.STDOUT)
         # output = output.decode('utf-8')
@@ -349,7 +429,13 @@ def remove_network(ssid):
     
 @app.route('/wifi/apply_changes', methods=['POST'])
 def apply_wifi_changes():
-    # run command /usr/bin/wifisetup restart
+    """
+    Applies the wifi changes to the device
+    
+    Returns:
+        JSON: A JSON object containing the status of the operation
+    """
+
     print("apply wifi changes")
     try:
         output = subprocess.check_output(['/etc/init.d/network', 'restart'], stderr=subprocess.STDOUT)
@@ -361,6 +447,12 @@ def apply_wifi_changes():
 
 
 def update_config_file(config_data):
+    """
+    Updates the config file with the new values
+    
+    Args:
+        config_data (dict): A dictionary containing the new values to be written to the config file
+    """
     config = configparser.ConfigParser()
     config.read(CONFIG_FILE)
     for key, value in config_data.items():
@@ -371,6 +463,16 @@ def update_config_file(config_data):
     print("Config file updated")
 
 def check_config_values(config_data):
+    """
+    Checks if the values in the config file are valid and updates them if they are not
+
+    Args:
+        config_data (dict): A dictionary containing the new values to be written to the config file
+        
+    Returns:
+        dict: A dictionary containing the new values to be written to the config file
+    """ 
+        
     required_keys = ['sampling_period', 'write_period', 'new_file_period', 'upload_period']
     for key in required_keys:
         if key not in config_data:
@@ -397,6 +499,12 @@ def check_config_values(config_data):
 # Receive the form data as JSON and print it
 @app.route('/save_config', methods=['POST'])
 def save_config():
+    """
+    Saves the new configuration to the config file and applies the changes
+    
+    Returns:
+        JSON: A JSON object containing the status of the operation
+    """
     message = ""
     try:
         config_data = request.get_json()
@@ -424,6 +532,12 @@ def save_config():
 
 @app.route('/reboot', methods=['POST'])
 def reboot():
+    """
+    Reboots the device
+    
+    Returns:
+        JSON: A JSON object containing the status of the operation
+    """
     # run command reboot
     try:
         stop_event.set()
@@ -439,6 +553,9 @@ def reboot():
         return jsonify({"status": "error", "message": str(e)})
 
 def shutdown_server():
+    """
+    Shuts down the flask app
+    """
     # shutdown flask app
     shutdown = request.environ.get('werkzeug.server.shutdown')
     if shutdown:

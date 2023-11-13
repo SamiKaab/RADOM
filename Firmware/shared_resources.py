@@ -18,6 +18,17 @@ LOG_FILE = "/root/Firmware/logs/standup.log"
 DEVICE_ID ='A17E'
 
 def device_should_record(WAKE_AT, SLEEP_AT, rtc):
+    """
+    This function checks if the device should record data based on the current time and the wake up and sleep times.
+    
+    Args:
+        WAKE_AT (str): The time at which the device should start recording data.
+        SLEEP_AT (str): The time at which the device should stop recording data.
+        rtc (PiicoDev_RTC): The real time clock object.
+        
+    Returns:
+        bool: True if the device should record data, False otherwise.
+    """
     current_time = rtc.read_datetime().time()
     start = datetime.strptime(WAKE_AT, "%H:%M").time()
     end = datetime.strptime(SLEEP_AT, "%H:%M").time()

@@ -1,6 +1,6 @@
 """
 File: backup_to_drive.py
-Description: This script backs up the data folder to Google Drive.
+Description: This script contains functions to upload and download files to and from Google Drive.
 Author: Sami Kaab
 Date: 2023-07-05
 """
@@ -39,7 +39,12 @@ def get_credentials():
     return creds
 
 def is_internet_available():
-    """Check if an internet connection is available."""
+    """
+    Check if there is internet access available.
+
+    Returns:
+        bool: True if internet access is available, False otherwise.
+    """
     try:
         requests.get("http://google.com", timeout=5)
         # logging.info("Internet access available")
@@ -51,9 +56,6 @@ def is_internet_available():
 def delete_all():
     """
     Deletes all files in the user's Google Drive account using the Google Drive API.
-
-    Returns:
-        None
     """
     # Set up the service account credentials
     credentials = get_credentials()
@@ -72,50 +74,6 @@ def delete_all():
         drive_service.files().delete(fileId=file_id).execute()
         print(f"Deleted file: {file_name}")
         
-
-def download_all():
-    """
-    Downloads all files from Google Drive and saves them to the local system.
-
-    Returns:
-    None
-    """
-    credentials = get_credentials()
-    # Build the Google Drive API client
-    drive_service = build("drive", "v3", credentials=credentials)
-
-    # Retrieve file metadata with parent information
-    response = drive_service.files().list(fields="files(id, name, mimeType, parents)").execute()
-    files = response.get("files", [])
-
-    # Iterate through the files and download them
-    for file in files:
-        file_id = file["id"]
-        file_name = file["name"]
-        parents = file.get("parents", [])
-        mime_type = file["mimeType"]
-
-        # Create the folder structure on the local system
-        folder_path = ""
-        for parent_id in parents:
-            parent_response = drive_service.files().get(fileId=parent_id, fields="name").execute()
-            parent_name = parent_response.get("name", "")
-            folder_path = os.path.join(parent_name, folder_path)
-            os.makedirs(folder_path, exist_ok=True)
-
-        # Download the file
-        if "application/vnd.google-apps" in mime_type:
-            print(f"Skipping export for file: {file_name}. It is not a supported Google Docs Editors file.")
-            continue
-
-        request = drive_service.files().get_media(fileId=file_id)
-        file_content = request.execute()
-
-        file_path = os.path.join(folder_path, file_name)
-        with open(file_path, "wb") as f:
-            f.write(file_content)
-
-        print(f"Downloaded file: {file_path}")
 
 def create_folder(service, name, parent_folder_id=None):
     """
@@ -197,9 +155,6 @@ def clone_folder_structure(service, local_folder, parent_folder_id):
         service: An authorized Google Drive API service instance.
         local_folder: The path of the local folder to be cloned.
         parent_folder_id: The ID of the parent folder in Google Drive.
-
-    Returns:
-        None
     """
     
     folder_name = os.path.basename(local_folder)
@@ -229,9 +184,6 @@ def upload(drive_root_folder):
     Args:
         drive_root_folder (str): The name of the folder to create in Google Drive
             to store the backup.
-
-    Returns:
-        None
     """
     # Get the user credentials for Google Drive
     creds = get_credentials()
@@ -271,6 +223,16 @@ def check_if_already_exist(file_path, service, parent_folder_id):
     return False
 
 def delete_file(service, file_name):
+    """
+    Deletes a file from Google Drive.
+
+    Args:
+        service (Google Drive API service): The Google Drive API service.
+        file_name (str): The name of the file to delete.
+
+    Returns:
+        bool: True if the file was deleted, False otherwise.
+    """
     if service is None:
         creds = get_credentials()
         service = build("drive", "v3", credentials=creds)
@@ -285,6 +247,19 @@ def delete_file(service, file_name):
     return False
 
 def download_file(service, parent_folder_id, file_name, destination):
+    """
+    Downloads a file from Google Drive to a specified destination folder.
+
+    Args:
+        service: Google Drive API service object.
+        parent_folder_id: ID of the parent folder containing the file to download.
+        file_name: Name of the file to download.
+        destination: Path to the destination folder where the file will be saved.
+
+    Returns:
+        True if the file was downloaded successfully, False otherwise.
+    """
+    
     if service is None:
         creds = get_credentials()
         service = build("drive", "v3", credentials=creds)
@@ -302,6 +277,14 @@ def download_file(service, parent_folder_id, file_name, destination):
         return True
     
 def backup_config_file(parent_folder_id=None, parent_folder_name=None):
+    """
+    Finds the ID of the configuration file in Google Drive and uploads a new version of the file.
+    If the file already exists, it will be deleted before uploading the new version.
+
+    Args:
+        parent_folder_id (str): ID of the parent folder in Google Drive.
+        parent_folder_name (str): Name of the parent folder in Google Drive.
+    """
     file_id = None
     try:
         # find id of config file which parent folder is parent_folder_id or parent_folder_name
