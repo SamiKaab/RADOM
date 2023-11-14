@@ -27,9 +27,6 @@ The device requires internet access in order to install the necessary packages.
 ```sh
 wifisetup add -ssid <ssid> -encr psk2 -password <password>
 ```
-```sh
-wifisetup add -ssid BadLuck -encr psk2 -password trc5X2pl52X51
-```
 
 Replace ssid and password with the name and password of your wifi network.
 You should now have internet access, which you can verify by pinging a website:
@@ -44,7 +41,7 @@ opkg update && opkg install git git-http ca-bundle
 ```
 We can now install the necessary Omega2 and python packages. Clone the Firmware folder in the repository from the root folder:
 ```sh
-git clone --depth 1 --filter=blob:none https://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@github.com/SamiKaab/Be-Up-Standing && mv ./Be-Up-Standing/Firmware . && rm -r Be-Up-Standing
+git clone --depth 1 --filter=blob:none git@github.com:NeuroRehack/Be-Up-Standing.git && mv ./Be-Up-Standing/Firmware . && rm -r Be-Up-Standing
 ```
 then navigate to the Firmware folder and run the setup script:
 ```sh
