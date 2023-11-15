@@ -6,5 +6,6 @@ venv
 *.pyo
 *.pyd
 *.csv
+credentials.json
 build
 dist
