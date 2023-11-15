@@ -55,11 +55,9 @@ source ./shell_scripts/omega_rename.sh
 This script will amongst other things change the default wifi name and password of the omega as well as the device's password.  
 The device should now be ready for use. Just restart it using ```reboot``` and it should start running the program on startup.
 
-
-
 # Setting up a google drive API
 The data recorded is uploaded to a google drive using the google drive api. For the program to use the api it is necessary to generate a credentials file.
 You can find instructions on how to set up a google drive api [here](https://developers.google.com/drive/api/quickstart/python).  
 Since we are using a headless device it is not possible for us to generate tokens which are necessary when using a normal google account and require a webbrowser based authentification which we cannot perform. For this reason make sure to link a google service account to the project.
-Once you have generated the credentials file, copy it to the Firmware folder on the Omega2 Pro and rename it "credentials.json".
+Once you have generated the credentials file, copy it to the Firmware folder on the Omega2 Pro and rename it "credentials.json". You will also need it for accessing the google drive using the drive_cloner.py script from your computer.
 
