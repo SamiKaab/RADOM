@@ -6,7 +6,7 @@ import configparser
 import backup_to_drive as google_drive
 from shared_resources import FILE_HEADER, ROOT_DIR, DATA_DIR, TEMP_DIR, CONFIG_FILE,stop_event, lock, device_should_record,LOG_FILE,DEVICE_ID
 import subprocess
-# import logging
+import logging
 
 def get_time_from_internet():
     """
@@ -44,9 +44,18 @@ def upload_loop(rtc, status_queue):
     """
     
     # set up logging
-    # loggingbasicConfig(filename= LOG_FILE , level=logging.DEBUG, format='%(asctime)s %(message)s')
-    # logginginfo('upload thread: started')
-
+    logging.basicConfig(filename= LOG_FILE , level=logging.DEBUG, format='%(asctime)s %(message)s')
+    logging.info('upload thread: started')
+  
+    logging.getLogger("requests").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("googleapiclient").setLevel(logging.WARNING)
+    logging.getLogger("oauth2client").setLevel(logging.WARNING)
+    logging.getLogger("googleapiclient.discovery").setLevel(logging.WARNING)
+    logging.getLogger("googleapiclient.http").setLevel(logging.WARNING)
+    logging.getLogger("googleapiclient.discovery_cache").setLevel(logging.WARNING)
+    logging.getLogger("googleapiclient.discovery").setLevel(logging.WARNING)
+    
     with lock:
         config = configparser.ConfigParser()
         config.read(CONFIG_FILE)
@@ -130,11 +139,13 @@ def upload_loop(rtc, status_queue):
                 status_queue.append(("uploading", True))
                 # Back up data to Google Drive and turn off the red LED to indicate success
                 # file_list = [file for file in os.listdir(DATA_DIR) if file.endswith(".csv")]
+                logging.info('upload thread: starting to upload data')    
                 try:
                     google_drive.upload(DEVICE_ID)
                 except Exception as e:
-                    print(f"problem encountered while uploading:\n{e}")        
-                # logginginfo('upload thread: data uploaded')    
+                    print(f"problem encountered while uploading:\n{e}") 
+                    logging.info(f'upload thread: problem encountered while uploading:\n{e}')       
+                logging.info('upload thread: data uploaded')    
                 status_queue.append(("uploading", False))
 
             else:

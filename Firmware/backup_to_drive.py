@@ -163,7 +163,13 @@ def clone_folder_structure(service, local_folder, parent_folder_id):
     for item in os.listdir(local_folder):
         item_path = os.path.join(local_folder, item)
         if os.path.isdir(item_path): # if item is a folder, recursively clone it
-            clone_folder_structure(service, item_path, folder_id)
+            # check if folder is empty
+            if not os.listdir(item_path):
+                # delete empty folder
+                shutil.rmtree(item_path)
+                print(f"Deleted empty folder: {item_path}")
+            else:
+                clone_folder_structure(service, item_path, folder_id)
         else: # if item is a file, upload it
             # check if file extension is .csv
             if item_path.endswith(".csv"):

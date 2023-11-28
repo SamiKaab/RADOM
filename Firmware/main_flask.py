@@ -27,7 +27,7 @@ import lib.full_color_led as led
 import backup_to_drive as google_drive
 from lib.battery import compute_battery_level
 
-from shared_resources import stop_event, CONFIG_FILE, TEMP_DIR, DEVICE_ID
+from shared_resources import stop_event, CONFIG_FILE, TEMP_DIR, DEVICE_ID, DATA_DIR
 from sensor_thread import read_write_loop
 from upload_thread import upload_loop
 from led_thread import pulsate_led
@@ -563,8 +563,20 @@ def shutdown_server():
 
 if __name__ == "__main__":
     try:
-        #Delete content of the temp folder
-        subprocess.run(f"rm -rf {TEMP_DIR}/*", shell=True)
+        for file in os.listdir(TEMP_DIR):
+            # try and read the file
+            try:
+                with open(os.path.join(TEMP_DIR, file), 'r') as f:
+                    pass
+                #move the file to the data directory
+                new_file_name = os.path.join(DATA_DIR, os.path.join(file.split('_')[1]),file.split('_')[2], f"{file}.csv")
+                os.rename(os.path.join(TEMP_DIR, file), new_file_name)
+                print(f"File {file} moved to {new_file_name}")
+            except:
+                # if the file is not readable, delete it
+                os.remove(os.path.join(TEMP_DIR, file))
+        # #Delete content of the temp folder
+        # subprocess.run(f"rm -rf {TEMP_DIR}/*", shell=True)
         # Create an empty queue
         led_status_queue = deque()
         led_status_queue.append(("settingUp", True))

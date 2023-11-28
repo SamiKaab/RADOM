@@ -8,7 +8,7 @@ import lib.human_presence as human_presence
 from lib.PiicoDev_VL53L1X import PiicoDev_VL53L1X
 import lib.battery as battery
 from shared_resources import FILE_HEADER, DATA_DIR, CONFIG_FILE, DEVICE_ID, TEMP_DIR, stop_event, lock, device_should_record, LOG_FILE,ROOT_DIR
-# import logging
+import logging
 
 def write_data_to_file(fileName, data):
     """
@@ -58,8 +58,8 @@ def read_write_loop(rtc, status_queue, sensor_data_queue):
     it in a list. The data is then written to a CSV file with the specified file name every `WRITE_PERIOD`
     seconds.
     """
-    # logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG, format='%(asctime)s %(message)s')
-    # logging.info("sensor_thread: starting read_write_loop")
+    logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG, format='%(asctime)s %(message)s')
+    logging.info("sensor_thread: starting read_write_loop")
 
     with lock:
         config = configparser.ConfigParser()
@@ -143,11 +143,11 @@ def read_write_loop(rtc, status_queue, sensor_data_queue):
             graph_data = [now, distance, hp, battery_level]
             sensor_data_queue.append(graph_data)
 
-            print("{now} {distance} {hp}".format(distance=distance, hp=hp, now=now))
+            # print("{now} {distance} {hp}".format(distance=distance, hp=hp, now=now))
 
             elapsed = now - lastNewFileTime
             if elapsed > timedelta(seconds=NEW_FILE_PERIOD): # create a new file
-                # logging.info("sensor_thread: creating new file")
+                logging.info("sensor_thread: creating new file")
                 # closed the last file
                 write_data_to_file(fileName, data)
                 data = [FILE_HEADER]
@@ -165,7 +165,7 @@ def read_write_loop(rtc, status_queue, sensor_data_queue):
             # Write data to CSV file after set amount of time has elapsed
             elapsed = now - lastWriteTime
             if elapsed > timedelta(seconds=WRITE_PERIOD):
-                # logging.info("sensor_thread: writing data to file")
+                logging.info("sensor_thread: writing data to file")
                 write_data_to_file(fileName, data)
                 # Reset data and time for the next write interval
                 data = []
