@@ -103,7 +103,9 @@ class FileDownloader:
         # Append a message to the log window
         self.log_window.insert(tk.END, f"{message}\n")
         self.log_window.yview(tk.END)  # Auto-scroll to the bottom
-        self.log_window.update_idletasks()
+        # self.log_window.update_idletasks()
+        # force the log window to update
+        self.log_window.update()
         
     def list_folder_structure(self, service, folder_id='root'):
         """
@@ -242,6 +244,7 @@ class FileDownloader:
             print(f"Folder '{parent_dir}' is empty. Deleting from Google Drive.")
             empty_folder = parent_dir.split(self.download_dir)[-1]
             self.log_message(f"Deleting empty google drive folder: '{empty_folder}'")
+            
         for file in files:
             file_id = file['id']
             file_name = file['name']
