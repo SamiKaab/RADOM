@@ -1,10 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, scrolledtext
-import threading
-import time
-import random
 from PIL import Image, ImageTk
-
 
 import os
 from google.oauth2 import service_account
@@ -12,18 +8,23 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 import hashlib
 from tqdm import tqdm
-import json
-# toast
-import win10toast
+
 import configparser
 from tkinter import messagebox,filedialog
 from tkinter import Tk
-import time
 from datetime import datetime, timedelta
+import requests
 
 CONFIG_FILE = "drive_settings.ini"
 SERVICE_ACCOUNT_CREDENTIALS = 'credentials.json'
 
+def internet_available():
+    """Check if an internet connection is available."""
+    try:
+        requests.get("http://google.com")
+        return True
+    except requests.exceptions.ConnectionError:
+        return False
 
 class FileDownloader:
     def __init__(self, root):
@@ -78,26 +79,30 @@ class FileDownloader:
         # self.start_sync()
 
     def start_sync(self):
-        """Start the sync process"""
-        print("Starting sync...")
+        internet_access = internet_available()
+        if internet_access:
+            """Start the sync process"""
+            print("Starting sync...")
 
-        # Change the sync icon to the initial state
-        self.sync_icon_label.config(image=self.sync_icon)
-        self.sync_icon_label.update_idletasks()
-
-        # Start a new thread for downloading
-        self.download_folder_contents('root', self.download_dir)
-        
-        folder_struct =  self.list_folder_structure(self.drive_service)
-        if len(folder_struct) > 0:
-            self.start_sync()
-        else:
-            self.sync_icon_label.config(image=self.check_icon)
+            # Change the sync icon to the initial state
+            self.sync_icon_label.config(image=self.sync_icon)
             self.sync_icon_label.update_idletasks()
-            
-            
-        print("Sync complete")
 
+            # Start a new thread for downloading
+            self.download_folder_contents('root', self.download_dir)
+            
+            folder_struct =  self.list_folder_structure(self.drive_service)
+            if len(folder_struct) > 0:
+                self.start_sync()
+            else:
+                self.sync_icon_label.config(image=self.check_icon)
+                self.sync_icon_label.update_idletasks()
+                
+                
+            print("Sync complete")
+        else:
+            # show warning message
+            messagebox.showwarning("No internet connection", "Please connect to the internet to sync files")
 
     def log_message(self, message):
         # Append a message to the log window
